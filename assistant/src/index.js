@@ -317,6 +317,43 @@ async function adminChatId(env) {
   return normalize(env.TELEGRAM_CHAT_ID || '', 64);
 }
 
+function telegramLeadKey(chatId) {
+  return `telegram_lead:${chatId}`;
+}
+
+async function telegramLeadState(env, chatId) {
+  if (!env.VAV_STATE) return null;
+  const stored = await env.VAV_STATE.get(telegramLeadKey(chatId));
+  if (!stored) return null;
+  try { return JSON.parse(stored); } catch { return null; }
+}
+
+async function saveTelegramLeadState(env, chatId, value) {
+  if (!env.VAV_STATE) throw new Error('KV binding missing');
+  await env.VAV_STATE.put(telegramLeadKey(chatId), JSON.stringify(value), { expirationTtl: 3600 });
+}
+
+async function clearTelegramLeadState(env, chatId) {
+  if (env.VAV_STATE && typeof env.VAV_STATE.delete === 'function') {
+    await env.VAV_STATE.delete(telegramLeadKey(chatId));
+  }
+}
+
+function telegramContactKeyboard(romanian = false) {
+  return {
+    keyboard: [[{
+      text: romanian ? 'Trimite contactul lui Valentin' : 'Передать контакт Валентину',
+      request_contact: true,
+    }]],
+    resize_keyboard: true,
+    one_time_keyboard: true,
+  };
+}
+
+function telegramVisitorIsRomanian(message, text = '') {
+  return String(message?.from?.language_code || '').toLowerCase().startsWith('ro') || isRomanian(text);
+}
+
 async function telegramConnectionCurrent(env) {
   const chatId = await adminChatId(env);
   if (!chatId) return false;
@@ -365,8 +402,11 @@ async function sendLead(env, lead) {
   const chatId = await adminChatId(env);
   if (!chatId) throw new Error('Telegram administrator is not connected');
   const transcript = transcriptText(lead.transcript);
+  const source = normalize(lead.page, 300).startsWith('Telegram')
+    ? 'Telegram-бота VAVGroupBOT'
+    : 'vavgroup.pro';
   const text = [
-    '<b>Новый запрос с vavgroup.pro</b>',
+    `<b>Новый запрос из ${source}</b>`,
     '',
     `<b>Имя:</b> ${escapeHtml(lead.name)}`,
     `<b>Контакт:</b> ${escapeHtml(lead.contact)}`,
@@ -459,7 +499,9 @@ async function handleTelegramWebhook(request, env) {
   const message = update?.message;
   const chatId = message?.chat?.id ? String(message.chat.id) : '';
   const text = normalize(message?.text || '', 500);
-  if (!chatId || !text) return new Response('OK');
+  const contact = message?.contact;
+  if (!chatId || (!text && !contact)) return new Response('OK');
+  const romanian = telegramVisitorIsRomanian(message, text);
 
   try {
     if (/^\/start(?:@\w+)?(?:\s+|$)/i.test(text)) {
@@ -474,12 +516,60 @@ async function handleTelegramWebhook(request, env) {
           chat_id: chatId,
           text: 'VAV Assistant подключён. Новые запросы с vavgroup.pro будут приходить в этот чат. Команда /status проверяет состояние подключения.',
         });
-      } else {
+      } else if (code) {
         await telegramCall(env, 'sendMessage', {
           chat_id: chatId,
           text: 'Код подключения не принят. Откройте персональную ссылку, созданную мастером VAV Assistant.',
         });
+      } else {
+        await telegramCall(env, 'sendMessage', {
+          chat_id: chatId,
+          text: romanian
+            ? 'Bun venit la VAV Group. Puteți pune o întrebare aici sau puteți transmite voluntar contactul lui Valentin. Apăsarea butonului de mai jos confirmă acordul pentru transmiterea contactului și a mesajului dvs.'
+            : 'Добро пожаловать в VAV Group. Здесь можно задать вопрос или добровольно передать контакт Валентину. Нажатие кнопки ниже означает согласие на передачу вашего контакта и сообщения.',
+          reply_markup: telegramContactKeyboard(romanian),
+        });
       }
+      return new Response('OK');
+    }
+
+    if (/^\/cancel(?:@\w+)?$/i.test(text)) {
+      await clearTelegramLeadState(env, chatId);
+      await telegramCall(env, 'sendMessage', {
+        chat_id: chatId,
+        text: romanian ? 'Transmiterea contactului a fost anulată.' : 'Передача контакта отменена.',
+        reply_markup: { remove_keyboard: true },
+      });
+      return new Response('OK');
+    }
+
+    if (contact) {
+      const senderId = message?.from?.id ? String(message.from.id) : '';
+      const contactUserId = contact?.user_id ? String(contact.user_id) : '';
+      if (!senderId || senderId !== contactUserId) {
+        await telegramCall(env, 'sendMessage', {
+          chat_id: chatId,
+          text: romanian
+            ? 'Din motive de confidențialitate, trimiteți doar propriul contact folosind butonul Telegram.'
+            : 'Из соображений конфиденциальности передайте только свой контакт через кнопку Telegram.',
+        });
+        return new Response('OK');
+      }
+
+      await saveTelegramLeadState(env, chatId, {
+        stage: 'awaiting_task',
+        name: normalize([contact.first_name, contact.last_name].filter(Boolean).join(' '), 80),
+        phone: normalize(contact.phone_number, 40),
+        username: normalize(message?.from?.username || '', 40),
+        telegram_user_id: senderId,
+      });
+      await telegramCall(env, 'sendMessage', {
+        chat_id: chatId,
+        text: romanian
+          ? 'Mulțumesc. Descrieți acum problema de business într-un singur mesaj; contactul și mesajul vor fi trimise lui Valentin.'
+          : 'Спасибо. Теперь опишите бизнес-задачу одним сообщением; контакт и сообщение будут переданы Валентину.',
+        reply_markup: { remove_keyboard: true },
+      });
       return new Response('OK');
     }
 
@@ -497,7 +587,41 @@ async function handleTelegramWebhook(request, env) {
     if (text.startsWith('/')) {
       await telegramCall(env, 'sendMessage', {
         chat_id: chatId,
-        text: 'Доступные команды: /status. Также можно написать вопрос обычным сообщением.',
+        text: 'Доступные команды: /status, /cancel. Также можно написать вопрос обычным сообщением.',
+      });
+      return new Response('OK');
+    }
+
+    const pendingLead = await telegramLeadState(env, chatId);
+    if (pendingLead?.stage === 'awaiting_task') {
+      if (text.length < 5) {
+        await telegramCall(env, 'sendMessage', {
+          chat_id: chatId,
+          text: romanian
+            ? 'Descrieți sarcina puțin mai clar, într-un singur mesaj.'
+            : 'Опишите задачу немного подробнее одним сообщением.',
+        });
+        return new Response('OK');
+      }
+
+      const contactParts = [
+        pendingLead.username ? `@${pendingLead.username}` : '',
+        pendingLead.phone || '',
+        `Telegram ID: ${pendingLead.telegram_user_id}`,
+      ].filter(Boolean);
+      await sendLead(env, {
+        name: normalize(pendingLead.name || message?.from?.first_name || 'Посетитель Telegram', 80),
+        contact: contactParts.join(', '),
+        message: text,
+        page: 'Telegram bot @VAVGroupBOT',
+      });
+      await clearTelegramLeadState(env, chatId);
+      await telegramCall(env, 'sendMessage', {
+        chat_id: chatId,
+        text: romanian
+          ? 'Datele au fost trimise lui Valentin. Dacă doriți, îi puteți scrie și direct: https://t.me/sendmeyrlocation'
+          : 'Данные переданы Валентину. При желании можно также написать ему напрямую: https://t.me/sendmeyrlocation',
+        disable_web_page_preview: true,
       });
       return new Response('OK');
     }
@@ -505,14 +629,11 @@ async function handleTelegramWebhook(request, env) {
     if (wantsHumanHandoff(text)) {
       await telegramCall(env, 'sendMessage', {
         chat_id: chatId,
-        text: humanHandoffReply(text),
+        text: `${humanHandoffReply(text)}\n\n${romanian
+          ? 'Dacă preferați să fiți contactat, trimiteți voluntar contactul prin butonul de mai jos.'
+          : 'Если вам удобнее, чтобы с вами связались, добровольно передайте контакт кнопкой ниже.'}`,
         disable_web_page_preview: true,
-        reply_markup: {
-          inline_keyboard: [[{
-            text: isRomanian(text) ? 'Scrie-i lui Valentin' : 'Написать Валентину',
-            url: 'https://t.me/sendmeyrlocation',
-          }]],
-        },
+        reply_markup: telegramContactKeyboard(romanian),
       });
       return new Response('OK');
     }

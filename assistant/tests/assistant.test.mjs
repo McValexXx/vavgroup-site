@@ -236,6 +236,115 @@ test('Telegram webhook answers an ordinary message through the assistant', async
   }
 });
 
+test('Telegram public start offers an explicit contact-sharing button', async () => {
+  const telegramRequests = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    telegramRequests.push({ url: String(url), body: JSON.parse(options.body) });
+    return new Response(JSON.stringify({ ok: true, result: {} }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    const response = await handleRequest(new Request('https://worker.example/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'webhook-secret',
+      },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 12345 },
+          from: { id: 12345, language_code: 'ro' },
+          text: '/start',
+        },
+      }),
+    }), {
+      ...env,
+      TELEGRAM_BOT_TOKEN: 'test-token',
+      TELEGRAM_WEBHOOK_SECRET: 'webhook-secret',
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(telegramRequests.length, 1);
+    assert.equal(telegramRequests[0].body.reply_markup.keyboard[0][0].request_contact, true);
+    assert.match(telegramRequests[0].body.text, /VAV Group|contact/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram contact and task are forwarded to the connected Valentin chat', async () => {
+  const telegramRequests = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    telegramRequests.push({ url: String(url), body: JSON.parse(options.body) });
+    return new Response(JSON.stringify({ ok: true, result: {} }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  const state = {
+    values: new Map([['admin_chat_id', '99999']]),
+    async get(key) { return this.values.get(key) || null; },
+    async put(key, value) { this.values.set(key, value); },
+    async delete(key) { this.values.delete(key); },
+  };
+  const telegramEnv = {
+    ...env,
+    VAV_STATE: state,
+    TELEGRAM_BOT_TOKEN: 'test-token',
+    TELEGRAM_WEBHOOK_SECRET: 'webhook-secret',
+  };
+
+  try {
+    const contactResponse = await handleRequest(new Request('https://worker.example/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'webhook-secret',
+      },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 12345 },
+          from: { id: 12345, username: 'visitor', language_code: 'ro' },
+          contact: { user_id: 12345, first_name: 'Alex', phone_number: '+37379000000' },
+        },
+      }),
+    }), telegramEnv);
+    assert.equal(contactResponse.status, 200);
+    assert.equal(JSON.parse(state.values.get('telegram_lead:12345')).stage, 'awaiting_task');
+
+    const taskResponse = await handleRequest(new Request('https://worker.example/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'webhook-secret',
+      },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 12345 },
+          from: { id: 12345, username: 'visitor', language_code: 'ro' },
+          text: 'Vreau un audit al procesului de vânzări.',
+        },
+      }),
+    }), telegramEnv);
+
+    assert.equal(taskResponse.status, 200);
+    assert.equal(state.values.has('telegram_lead:12345'), false);
+    assert.equal(telegramRequests.length, 3);
+    assert.equal(telegramRequests[1].body.chat_id, '99999');
+    assert.match(telegramRequests[1].body.text, /Alex|\+37379000000|@visitor|audit/i);
+    assert.equal(telegramRequests[2].body.chat_id, '12345');
+    assert.match(telegramRequests[2].body.text, /Valentin/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('Telegram webhook sends a direct-contact button without further qualification', async () => {
   const telegramRequests = [];
   const originalFetch = globalThis.fetch;
@@ -263,8 +372,8 @@ test('Telegram webhook sends a direct-contact button without further qualificati
 
     assert.equal(response.status, 200);
     assert.equal(telegramRequests.length, 1);
-    assert.equal(telegramRequests[0].body.reply_markup.inline_keyboard[0][0].url, 'https://t.me/sendmeyrlocation');
-    assert.match(telegramRequests[0].body.text, /direct|Valentin/i);
+    assert.equal(telegramRequests[0].body.reply_markup.keyboard[0][0].request_contact, true);
+    assert.match(telegramRequests[0].body.text, /direct|Valentin|sendmeyrlocation/i);
   } finally {
     globalThis.fetch = originalFetch;
   }
