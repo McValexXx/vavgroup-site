@@ -104,6 +104,23 @@ test('chat endpoint returns a guided answer for an allowed site origin', async (
   assert.match(body.reply, /Автоматизация|процесс/i);
 });
 
+test('chat endpoint immediately offers direct Telegram contact when Valentin is requested', async () => {
+  const response = await handleRequest(new Request('https://worker.example/chat', {
+    method: 'POST',
+    headers: { Origin: origin, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: 'Vreau să discut direct cu Valentin',
+      session_id: 'session_handoff_12345',
+      consent: true,
+      history: [],
+    }),
+  }), env);
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.match(body.reply, /t\.me\/sendmeyrlocation/);
+  assert.equal(body.mode, 'guided');
+});
+
 test('Workers AI receives redacted text and becomes the active chat mode', async () => {
   let received;
   const aiEnv = {
@@ -185,6 +202,40 @@ test('Telegram webhook answers an ordinary message through the assistant', async
     assert.equal(telegramRequests.length, 1);
     assert.equal(telegramRequests[0].body.chat_id, '12345');
     assert.match(telegramRequests[0].body.text, /vânzări|CRM|leaduri/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram webhook sends a direct-contact button without further qualification', async () => {
+  const telegramRequests = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    telegramRequests.push({ url: String(url), body: JSON.parse(options.body) });
+    return new Response(JSON.stringify({ ok: true, result: {} }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    const response = await handleRequest(new Request('https://worker.example/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'webhook-secret',
+      },
+      body: JSON.stringify({ message: { chat: { id: 12345 }, text: 'Vreau să discut direct cu Valentin' } }),
+    }), {
+      ...env,
+      TELEGRAM_BOT_TOKEN: 'test-token',
+      TELEGRAM_WEBHOOK_SECRET: 'webhook-secret',
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(telegramRequests.length, 1);
+    assert.equal(telegramRequests[0].body.reply_markup.inline_keyboard[0][0].url, 'https://t.me/sendmeyrlocation');
+    assert.match(telegramRequests[0].body.text, /direct|Valentin/i);
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -28,7 +28,8 @@ const SYSTEM_INSTRUCTIONS = `
 
 Правила:
 1. Отвечай на языке посетителя; если язык неясен — по-русски.
-2. Пиши кратко, конкретно и профессионально: обычно 2–5 предложений, максимум 120 слов.
+2. Пиши кратко, конкретно и профессионально: 1–3 коротких предложения, максимум 70 слов.
+   Задавай не более одного вопроса за ответ. Не повторяй уже известный контекст.
 3. Используй только публичные факты из базы ниже. Не придумывай клиентов, цифры, цены,
    партнёрства, гарантии, сотрудников, историю компании или результаты кейсов.
 4. Не называй работодателя клиента VAV Group и не утверждай, что сделка была выиграна,
@@ -39,6 +40,9 @@ const SYSTEM_INSTRUCTIONS = `
    контакта направляй пользователя в защищённую форму «Передать задачу Валентину».
 7. Если данных недостаточно, задай один полезный уточняющий вопрос.
 8. В подходящий момент предложи диагностику или разговор с Валентином, но без давления.
+9. Если человек прямо просит связать его с Валентином, консультантом или живым человеком,
+   не квалифицируй дальше и не отправляй заполнять форму. Сразу дай прямую ссылку
+   https://t.me/sendmeyrlocation и предложи написать Валентину в Telegram.
 
 Публичная база VAV Group:
 ${PUBLIC_KNOWLEDGE}
@@ -57,6 +61,16 @@ export function redactSensitive(value) {
 
 function isRomanian(text) {
   return /[ăâîșț]|\b(bună|vreau|putem|afacere|vânzări|automatizare|consultanță|preț|contact)\b/i.test(text);
+}
+
+function wantsHumanHandoff(value) {
+  return /(соед[ие]н|связ(?:аться|и)|поговор(?:ить|ю)|написать|жив(?:ой|ым)\s+человек|оператор|консультант).{0,35}валентин|валентин.{0,35}(соед[ие]н|связ|поговор|напис)|(?:vreau|doresc|pot|aș vrea).{0,30}(?:vorb|discut|scri).{0,25}valentin|(?:vorb|discut|scri).{0,25}(?:direct|cu).{0,20}valentin|(?:connect|talk|speak|message).{0,30}valentin|human\s+(?:agent|consultant)/i.test(normalize(value, 500));
+}
+
+function humanHandoffReply(message) {
+  return isRomanian(message)
+    ? 'Sigur. Îi puteți scrie direct lui Valentin în Telegram: https://t.me/sendmeyrlocation'
+    : 'Конечно. Напишите Валентину напрямую в Telegram: https://t.me/sendmeyrlocation';
 }
 
 export function fallbackReply(message) {
@@ -370,6 +384,14 @@ async function handleChat(request, env) {
   if (!rateLimit(request, sessionId)) return json({ ok: false, error: 'rate_limited' }, 429, origin, env);
 
   const history = cleanHistory(body.history);
+  if (wantsHumanHandoff(message)) {
+    return json({
+      ok: true,
+      reply: humanHandoffReply(message),
+      mode: 'guided',
+      can_notify: Boolean(await adminChatId(env)),
+    }, 200, origin, env);
+  }
   const { reply, mode } = await assistantReply(env, message, history);
 
   return json({
@@ -459,6 +481,21 @@ async function handleTelegramWebhook(request, env) {
       await telegramCall(env, 'sendMessage', {
         chat_id: chatId,
         text: 'Доступные команды: /status. Также можно написать вопрос обычным сообщением.',
+      });
+      return new Response('OK');
+    }
+
+    if (wantsHumanHandoff(text)) {
+      await telegramCall(env, 'sendMessage', {
+        chat_id: chatId,
+        text: humanHandoffReply(text),
+        disable_web_page_preview: true,
+        reply_markup: {
+          inline_keyboard: [[{
+            text: isRomanian(text) ? 'Scrie-i lui Valentin' : 'Написать Валентину',
+            url: 'https://t.me/sendmeyrlocation',
+          }]],
+        },
       });
       return new Response('OK');
     }
