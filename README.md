@@ -84,20 +84,19 @@ All three values are optional. The production site builds without them and does 
 
 Variables prefixed with `PUBLIC_` are included in browser-delivered code. They must never contain API keys, passwords or private credentials.
 
-## Activate the contact form
+## Contact form
 
-The form is prepared specifically for Formspree. Without a configured endpoint it is visibly disabled, does not send or store entered data, and offers the approved email and phone fallback.
+The production form is connected to Formspree endpoint `https://formspree.io/f/xzepwogo` and delivers submissions to the verified `valentin@vavgroup.pro` account. The endpoint is intentionally public; it is not an API key or credential. Consent, a honeypot and clear error/fallback states remain enabled.
 
-Formspree setup:
+To replace the production endpoint later without editing the component:
 
-1. Create a form in Formspree and copy its HTTPS endpoint, for example `https://formspree.io/f/...`.
-2. Add `PUBLIC_FORMSPREE_ENDPOINT=<endpoint>` to local `.env`.
+1. Create and verify the replacement form in Formspree.
+2. Add `PUBLIC_FORMSPREE_ENDPOINT=<endpoint>` to local `.env` for local testing.
 3. In GitHub, open **Repository → Settings → Secrets and variables → Actions → Variables**.
-4. Create a repository variable named `PUBLIC_FORMSPREE_ENDPOINT` with that endpoint.
-5. Trigger the Pages workflow again.
-6. Submit a real test and confirm that the destination inbox, spam handling, privacy text and retention settings are correct.
+4. Create or update `PUBLIC_FORMSPREE_ENDPOINT` with the replacement endpoint.
+5. Trigger the Pages workflow and complete a delivery test.
 
-The endpoint is intentionally treated as a public configuration value and is accepted only when it is an HTTPS `formspree.io/f/…` URL. Do not place an API key or other secret in it.
+Only HTTPS `formspree.io/f/…` endpoints are accepted. Do not place an API key or other secret in this variable.
 
 The published privacy policy discloses the currently disabled Formspree architecture. Obtain a qualified legal review before activating this or another processor.
 

@@ -1,5 +1,6 @@
 ---
-const rawEndpoint = import.meta.env.PUBLIC_FORMSPREE_ENDPOINT?.trim() || '';
+const productionEndpoint = 'https://formspree.io/f/xzepwogo';
+const rawEndpoint = import.meta.env.PUBLIC_FORMSPREE_ENDPOINT?.trim() || (import.meta.env.PROD ? productionEndpoint : '');
 let endpointConfigured = false;
 
 try {
