@@ -30,6 +30,51 @@ test('health endpoint reports guided mode and disconnected Telegram', async () =
   const body = await response.json();
   assert.equal(body.mode, 'guided');
   assert.equal(body.telegram_connected, false);
+  assert.equal(body.telegram_connection_current, false);
+});
+
+test('Telegram start code marks the current connection generation', async () => {
+  const telegramRequests = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    telegramRequests.push({ url: String(url), body: JSON.parse(options.body) });
+    return new Response(JSON.stringify({ ok: true, result: {} }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    const connectEnv = {
+      ...env,
+      VAV_STATE: {
+        values: new Map(),
+        async get(key) { return this.values.get(key) || null; },
+        async put(key, value) { this.values.set(key, value); },
+      },
+      TELEGRAM_BOT_TOKEN: 'test-token',
+      TELEGRAM_WEBHOOK_SECRET: 'webhook-secret',
+      TELEGRAM_CONNECT_CODE: 'current-connect-code',
+    };
+    const response = await handleRequest(new Request('https://worker.example/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'webhook-secret',
+      },
+      body: JSON.stringify({ message: { chat: { id: 67890 }, text: '/start current-connect-code' } }),
+    }), connectEnv);
+
+    assert.equal(response.status, 200);
+    assert.equal(connectEnv.VAV_STATE.values.get('admin_chat_id'), '67890');
+    assert.equal(connectEnv.VAV_STATE.values.get('admin_connection_generation'), 'current-connect-code');
+
+    const health = await handleRequest(new Request('https://worker.example/health'), connectEnv);
+    assert.equal((await health.json()).telegram_connection_current, true);
+    assert.equal(telegramRequests.length, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('chat endpoint requires explicit consent', async () => {

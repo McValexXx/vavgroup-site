@@ -286,6 +286,14 @@ async function adminChatId(env) {
   return normalize(env.TELEGRAM_CHAT_ID || '', 64);
 }
 
+async function telegramConnectionCurrent(env) {
+  const chatId = await adminChatId(env);
+  if (!chatId) return false;
+  if (!env.VAV_STATE || !env.TELEGRAM_CONNECT_CODE) return Boolean(env.TELEGRAM_CHAT_ID);
+  const generation = await env.VAV_STATE.get('admin_connection_generation');
+  return Boolean(generation && generation === env.TELEGRAM_CONNECT_CODE);
+}
+
 function transcriptText(transcript) {
   if (!Array.isArray(transcript)) return '';
   return transcript
@@ -394,6 +402,7 @@ async function handleTelegramWebhook(request, env) {
         if (!env.VAV_STATE) throw new Error('KV binding missing');
         await env.VAV_STATE.put('admin_chat_id', chatId);
         await env.VAV_STATE.put('admin_connected_at', new Date().toISOString());
+        await env.VAV_STATE.put('admin_connection_generation', env.TELEGRAM_CONNECT_CODE);
         await telegramCall(env, 'sendMessage', {
           chat_id: chatId,
           text: 'VAV Assistant подключён. Новые запросы с vavgroup.pro будут приходить в этот чат. Команда /status проверяет состояние подключения.',
@@ -461,6 +470,7 @@ export async function handleRequest(request, env = {}) {
       service: 'vav-assistant',
       mode: aiMode(env),
       telegram_connected: Boolean(await adminChatId(env)),
+      telegram_connection_current: await telegramConnectionCurrent(env),
     }, 200, origin, env);
   }
   if (request.method === 'POST' && url.pathname === '/chat') return handleChat(request, env);

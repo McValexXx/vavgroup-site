@@ -213,7 +213,7 @@ try {
     Start-Sleep -Seconds 3
     try {
       $Health = Invoke-RestMethod -Method Get -Uri "$WorkerEndpoint/health?setup=$Attempt"
-      if ($Health.telegram_connected -eq $true) { $Connected = $true; break }
+      if ($Health.telegram_connection_current -eq $true) { $Connected = $true; break }
     } catch { }
     Write-Progress -Activity 'Waiting for Telegram START' -Status "Attempt $Attempt of 60" -PercentComplete (($Attempt / 60) * 100)
   }
