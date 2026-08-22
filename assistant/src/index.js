@@ -294,6 +294,26 @@ async function telegramConnectionCurrent(env) {
   return Boolean(generation && generation === env.TELEGRAM_CONNECT_CODE);
 }
 
+async function telegramDiagnostics(env) {
+  const result = {
+    bot_api_ok: false,
+    webhook_configured: false,
+    webhook_pending_updates: 0,
+    webhook_last_error: '',
+  };
+  try {
+    const bot = await telegramCall(env, 'getMe', {});
+    result.bot_api_ok = Boolean(bot?.id && bot?.username);
+    const webhook = await telegramCall(env, 'getWebhookInfo', {});
+    result.webhook_configured = Boolean(webhook?.url && String(webhook.url).endsWith('/telegram/webhook'));
+    result.webhook_pending_updates = Number(webhook?.pending_update_count || 0);
+    result.webhook_last_error = normalize(webhook?.last_error_message || '', 180);
+  } catch {
+    result.bot_api_ok = false;
+  }
+  return result;
+}
+
 function transcriptText(transcript) {
   if (!Array.isArray(transcript)) return '';
   return transcript
@@ -465,13 +485,15 @@ export async function handleRequest(request, env = {}) {
   }
 
   if (request.method === 'GET' && url.pathname === '/health') {
-    return json({
+    const health = {
       ok: true,
       service: 'vav-assistant',
       mode: aiMode(env),
       telegram_connected: Boolean(await adminChatId(env)),
       telegram_connection_current: await telegramConnectionCurrent(env),
-    }, 200, origin, env);
+    };
+    if (url.searchParams.get('deep') === '1') health.telegram_api = await telegramDiagnostics(env);
+    return json(health, 200, origin, env);
   }
   if (request.method === 'POST' && url.pathname === '/chat') return handleChat(request, env);
   if (request.method === 'POST' && url.pathname === '/lead') return handleLead(request, env);

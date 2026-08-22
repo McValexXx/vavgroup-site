@@ -107,10 +107,39 @@ function Read-BotTokenFromDialog {
 }
 
 function Set-WorkerSecret {
-  param([string]$Name, [string]$Value, [string]$Wrangler)
+  param(
+    [string]$Name,
+    [string]$Value,
+    [string]$Node,
+    [string]$WranglerScript
+  )
   Write-Host "Setting protected server value: $Name" -ForegroundColor DarkCyan
-  $Value | & $Wrangler secret put $Name --config $WorkerConfig
-  Assert-Success "Setting $Name"
+  $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+  $StartInfo.FileName = $Node
+  $StartInfo.Arguments = "`"$WranglerScript`" secret put $Name --config `"$WorkerConfig`""
+  $StartInfo.UseShellExecute = $false
+  $StartInfo.CreateNoWindow = $true
+  $StartInfo.RedirectStandardInput = $true
+  $StartInfo.RedirectStandardOutput = $true
+  $StartInfo.RedirectStandardError = $true
+
+  $SecretProcess = New-Object System.Diagnostics.Process
+  $SecretProcess.StartInfo = $StartInfo
+  try {
+    if (-not $SecretProcess.Start()) { throw "Could not start secret storage for $Name." }
+    $SecretProcess.StandardInput.Write($Value)
+    $SecretProcess.StandardInput.Close()
+    $StandardOutput = $SecretProcess.StandardOutput.ReadToEnd()
+    $StandardError = $SecretProcess.StandardError.ReadToEnd()
+    $SecretProcess.WaitForExit()
+    if ($StandardOutput) { Write-Host $StandardOutput.TrimEnd() }
+    if ($StandardError) { Write-Host $StandardError.TrimEnd() }
+    if ($SecretProcess.ExitCode -ne 0) {
+      throw "Setting $Name failed with exit code $($SecretProcess.ExitCode)."
+    }
+  } finally {
+    $SecretProcess.Dispose()
+  }
 }
 
 function Write-Utf8NoBom {
@@ -125,11 +154,12 @@ try {
   $NodeExecutable = Find-Executable -Name 'node' -Candidates @((Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe'))
   $PnpmExecutable = Find-Executable -Name 'pnpm' -Candidates @((Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback\pnpm.cmd'))
   $WranglerExecutable = Join-Path $RepositoryRoot 'node_modules\.bin\wrangler.cmd'
+  $WranglerScript = Join-Path $RepositoryRoot 'node_modules\wrangler\bin\wrangler.js'
 
   if (-not $GitExecutable -or -not $NodeExecutable -or -not $PnpmExecutable) {
     throw 'Git, Node.js or pnpm was not found. Run the VAV GitHub setup first.'
   }
-  if (-not (Test-Path -LiteralPath $WranglerExecutable)) {
+  if (-not (Test-Path -LiteralPath $WranglerExecutable) -or -not (Test-Path -LiteralPath $WranglerScript)) {
     throw 'Cloudflare Wrangler is not installed. Run pnpm install in the VAV site folder.'
   }
   if (-not (Test-Path -LiteralPath $WorkerConfig)) { throw 'The VAV Assistant server configuration is missing.' }
@@ -182,9 +212,9 @@ try {
   $WebhookSecret = New-RandomHex 24
   $ConnectCode = New-RandomHex 18
 
-  Set-WorkerSecret -Name 'TELEGRAM_BOT_TOKEN' -Value $BotToken -Wrangler $WranglerExecutable
-  Set-WorkerSecret -Name 'TELEGRAM_WEBHOOK_SECRET' -Value $WebhookSecret -Wrangler $WranglerExecutable
-  Set-WorkerSecret -Name 'TELEGRAM_CONNECT_CODE' -Value $ConnectCode -Wrangler $WranglerExecutable
+  Set-WorkerSecret -Name 'TELEGRAM_BOT_TOKEN' -Value $BotToken -Node $NodeExecutable -WranglerScript $WranglerScript
+  Set-WorkerSecret -Name 'TELEGRAM_WEBHOOK_SECRET' -Value $WebhookSecret -Node $NodeExecutable -WranglerScript $WranglerScript
+  Set-WorkerSecret -Name 'TELEGRAM_CONNECT_CODE' -Value $ConnectCode -Node $NodeExecutable -WranglerScript $WranglerScript
 
   $WebhookPayload = @{
     url = "$WorkerEndpoint/telegram/webhook"
@@ -205,8 +235,17 @@ try {
   if (-not $CommandsResult.ok) { throw 'Telegram command setup failed.' }
 
   $ConnectUrl = "https://t.me/${BotUsername}?start=$ConnectCode"
+  $ConnectCommand = "/start $ConnectCode"
+  Set-Clipboard -Value $ConnectCommand
   Write-Host "`nTelegram will open now. Press START in the bot." -ForegroundColor Green
   Start-Process $ConnectUrl
+  Add-Type -AssemblyName System.Windows.Forms
+  [System.Windows.Forms.MessageBox]::Show(
+    "Telegram s-a deschis.`n`nDacă nu vedeți butonul START, faceți clic în chat, apăsați Ctrl+V și apoi Enter. Comanda temporară completă a fost copiată automat.`n`nNu copiați comanda în alte aplicații.",
+    'VAV Assistant - conectare Telegram',
+    [System.Windows.Forms.MessageBoxButtons]::OK,
+    [System.Windows.Forms.MessageBoxIcon]::Information
+  ) | Out-Null
 
   $Connected = $false
   for ($Attempt = 1; $Attempt -le 60; $Attempt++) {
@@ -219,6 +258,7 @@ try {
   }
   Write-Progress -Activity 'Waiting for Telegram START' -Completed
   if (-not $Connected) { throw 'Telegram was not connected in time. Run this setup again and press START when the bot opens.' }
+  if ((Get-Clipboard -Raw) -eq $ConnectCommand) { Set-Clipboard -Value '' }
 
   $TestPayload = @{
     name = 'VAV Setup Test'
