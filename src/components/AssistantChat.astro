@@ -71,6 +71,16 @@
         >
           <span>Написать в Telegram</span><span aria-hidden="true">↗</span>
         </a>
+        <a
+          class="assistant__telegram-bot"
+          href="https://t.me/VAVGroupBOT"
+          target="_blank"
+          rel="noopener noreferrer"
+          hidden
+          data-assistant-bot-link
+        >
+          <span>Продолжить с VAV AI-ботом в Telegram</span><span aria-hidden="true">↗</span>
+        </a>
       </div>
 
       <form class="assistant__composer" data-assistant-message-form>
@@ -94,7 +104,7 @@
       <form data-assistant-lead-form novalidate>
         <label>Имя <span>*</span><input name="name" type="text" autocomplete="name" maxlength="80" required /></label>
         <label>Телефон / Telegram / Email <span>*</span><input name="contact" type="text" autocomplete="email" maxlength="120" required /></label>
-        <label>Задача <span>*</span><textarea name="message" rows="3" maxlength="1500" required data-assistant-lead-message></textarea></label>
+        <label>Задача <span>*</span><textarea name="message" rows="3" minlength="5" maxlength="1500" required data-assistant-lead-message></textarea></label>
         <label class="assistant__lead-consent">
           <input name="consent" type="checkbox" value="accepted" required />
           <span>Согласен на обработку контактных данных и передачу сообщения Валентину по <a href="/privacy">политике конфиденциальности</a>.</span>
@@ -137,6 +147,7 @@
     const leadForm = root.querySelector<HTMLFormElement>('[data-assistant-lead-form]');
     const leadMessage = root.querySelector<HTMLTextAreaElement>('[data-assistant-lead-message]');
     const leadStatus = root.querySelector<HTMLElement>('[data-assistant-lead-status]');
+    const botLink = root.querySelector<HTMLAnchorElement>('[data-assistant-bot-link]');
 
     if (!toggle || !close || !panel || !messages || !consentView || !consentCheckbox || !start || !conversation || !messageForm || !input || !send || !handoff || !leadView || !leadClose || !leadForm || !leadStatus) return;
 
@@ -159,6 +170,13 @@
           if (candidate.protocol === 'https:') endpoint = candidate.href.replace(/\/$/, '');
         } catch {
           endpoint = '';
+        }
+        const botUsername = typeof config?.bot_username === 'string'
+          ? config.bot_username.replace(/^@/, '').trim()
+          : '';
+        if (botLink && /^[A-Za-z0-9_]{5,32}$/.test(botUsername)) {
+          botLink.href = `https://t.me/${botUsername}`;
+          botLink.hidden = false;
         }
         if (modeLabel) modeLabel.textContent = endpoint ? 'Защищённое соединение с VAV Assistant' : 'Контролируемый режим VAV';
       })
@@ -341,13 +359,18 @@
             session_id: sessionId,
           }),
         });
-        if (!response.ok) throw new Error('Lead request failed');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(typeof errorData?.error === 'string' ? errorData.error : 'lead_request_failed');
+        }
         leadForm.reset();
         leadStatus.dataset.state = 'success';
         leadStatus.textContent = 'Задача отправлена Валентину в Telegram. Он свяжется с вами после изучения контекста.';
-      } catch {
+      } catch (error) {
         leadStatus.dataset.state = 'error';
-        leadStatus.textContent = 'Не удалось отправить сообщение. Напишите на valentin@vavgroup.pro или позвоните: +7 (922) 461-55-17.';
+        leadStatus.textContent = error instanceof Error && error.message === 'required_fields'
+          ? 'Опишите задачу минимум пятью символами и проверьте контактные данные.'
+          : 'Не удалось отправить сообщение. Используйте кнопку прямого Telegram-контакта выше или напишите на valentin@vavgroup.pro.';
       } finally {
         if (submitButton) submitButton.disabled = false;
       }
@@ -374,7 +397,7 @@
   .assistant__close { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border: 0; border-radius: .45rem; color: #dce5e1; background: rgba(255, 255, 255, .07); cursor: pointer; }
   .assistant__close:hover { background: rgba(255, 255, 255, .14); }
   .assistant__close svg { width: 1.1rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-width: 1.6; }
-  .assistant__messages { height: calc(100% - 13.2rem); min-height: 12rem; overflow-y: auto; padding: 1rem; background: var(--surface-muted); overscroll-behavior: contain; }
+  .assistant__messages { height: calc(100% - 15.8rem); min-height: 10rem; overflow-y: auto; padding: 1rem; background: var(--surface-muted); overscroll-behavior: contain; }
   :global(.assistant__message) { display: flex; align-items: flex-start; gap: .55rem; margin-bottom: .85rem; }
   :global(.assistant__message p) { max-width: 84%; padding: .72rem .8rem; border: 1px solid var(--line); border-radius: .25rem .85rem .85rem .85rem; color: var(--muted-strong); background: #fff; font-size: .75rem; line-height: 1.55; box-shadow: var(--shadow-sm); white-space: pre-wrap; }
   :global(.assistant__message--user) { justify-content: flex-end; }
@@ -400,7 +423,9 @@
   .assistant__contact-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; margin: .65rem .8rem 0; }
   .assistant__handoff, .assistant__direct { min-height: 2.35rem; display: flex; align-items: center; justify-content: space-between; gap: .4rem; padding: .5rem .6rem; border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line)); border-radius: .45rem; color: var(--accent-hover); background: color-mix(in srgb, var(--accent) 5%, white); font-size: .63rem; font-weight: 700; line-height: 1.25; cursor: pointer; }
   .assistant__direct { border-color: color-mix(in srgb, #229ed9 36%, var(--line)); color: #176f96; background: color-mix(in srgb, #229ed9 6%, white); text-decoration: none; }
-  .assistant__handoff:hover, .assistant__direct:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, white); }
+  .assistant__telegram-bot { grid-column: 1 / -1; min-height: 2.25rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .48rem .6rem; border: 1px solid color-mix(in srgb, #229ed9 32%, var(--line)); border-radius: .45rem; color: #176f96; background: color-mix(in srgb, #229ed9 5%, white); font-size: .63rem; font-weight: 700; line-height: 1.25; text-decoration: none; }
+  .assistant__telegram-bot[hidden] { display: none; }
+  .assistant__handoff:hover, .assistant__direct:hover, .assistant__telegram-bot:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, white); }
   .assistant__composer { display: grid; grid-template-columns: 1fr 2.65rem; align-items: end; gap: .5rem; padding: .65rem .8rem .25rem; }
   .assistant__composer textarea { max-height: 7rem; min-height: 2.65rem; padding: .72rem .75rem; resize: none; border: 1px solid var(--line); border-radius: .5rem; color: var(--ink); background: #fff; font-size: .75rem; line-height: 1.45; }
   .assistant__composer textarea:focus { border-color: var(--accent); outline: 3px solid color-mix(in srgb, var(--accent) 10%, white); }
