@@ -259,7 +259,7 @@ async function assistantReply(env, message, history = []) {
 }
 
 function telegramUrl(env, method) {
-  return `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`;
+  return `https://api.telegram.org/bot${normalize(env.TELEGRAM_BOT_TOKEN || '', 256)}/${method}`;
 }
 
 function escapeHtml(value) {
@@ -267,7 +267,7 @@ function escapeHtml(value) {
 }
 
 async function telegramCall(env, method, payload) {
-  if (!env.TELEGRAM_BOT_TOKEN) throw new Error('Telegram token is not configured');
+  if (!normalize(env.TELEGRAM_BOT_TOKEN || '', 256)) throw new Error('Telegram token is not configured');
   const response = await fetch(telegramUrl(env, method), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -289,14 +289,20 @@ async function adminChatId(env) {
 async function telegramConnectionCurrent(env) {
   const chatId = await adminChatId(env);
   if (!chatId) return false;
-  if (!env.VAV_STATE || !env.TELEGRAM_CONNECT_CODE) return Boolean(env.TELEGRAM_CHAT_ID);
+  const currentCode = normalize(env.TELEGRAM_CONNECT_CODE || '', 256);
+  if (!env.VAV_STATE || !currentCode) return Boolean(env.TELEGRAM_CHAT_ID);
   const generation = await env.VAV_STATE.get('admin_connection_generation');
-  return Boolean(generation && generation === env.TELEGRAM_CONNECT_CODE);
+  return Boolean(generation && normalize(generation, 256) === currentCode);
 }
 
 async function telegramDiagnostics(env) {
+  const configuredToken = typeof env.TELEGRAM_BOT_TOKEN === 'string' ? env.TELEGRAM_BOT_TOKEN : '';
   const result = {
+    token_configured: Boolean(configuredToken),
+    token_format_ok: /^\d{6,14}:[A-Za-z0-9_-]{30,}$/.test(configuredToken),
+    token_trimmed_format_ok: /^\d{6,14}:[A-Za-z0-9_-]{30,}$/.test(configuredToken.trim()),
     bot_api_ok: false,
+    bot_api_error: '',
     webhook_configured: false,
     webhook_pending_updates: 0,
     webhook_last_error: '',
@@ -308,8 +314,9 @@ async function telegramDiagnostics(env) {
     result.webhook_configured = Boolean(webhook?.url && String(webhook.url).endsWith('/telegram/webhook'));
     result.webhook_pending_updates = Number(webhook?.pending_update_count || 0);
     result.webhook_last_error = normalize(webhook?.last_error_message || '', 180);
-  } catch {
+  } catch (error) {
     result.bot_api_ok = false;
+    result.bot_api_error = normalize(error instanceof Error ? error.message : 'Telegram API check failed', 160);
   }
   return result;
 }
@@ -418,11 +425,12 @@ async function handleTelegramWebhook(request, env) {
   try {
     if (/^\/start(?:@\w+)?(?:\s+|$)/i.test(text)) {
       const code = text.replace(/^\/start(?:@\w+)?\s*/i, '').trim();
-      if (code && env.TELEGRAM_CONNECT_CODE && code === env.TELEGRAM_CONNECT_CODE) {
+      const expectedCode = normalize(env.TELEGRAM_CONNECT_CODE || '', 256);
+      if (code && expectedCode && code === expectedCode) {
         if (!env.VAV_STATE) throw new Error('KV binding missing');
         await env.VAV_STATE.put('admin_chat_id', chatId);
         await env.VAV_STATE.put('admin_connected_at', new Date().toISOString());
-        await env.VAV_STATE.put('admin_connection_generation', env.TELEGRAM_CONNECT_CODE);
+        await env.VAV_STATE.put('admin_connection_generation', expectedCode);
         await telegramCall(env, 'sendMessage', {
           chat_id: chatId,
           text: 'VAV Assistant подключён. Новые запросы с vavgroup.pro будут приходить в этот чат. Команда /status проверяет состояние подключения.',

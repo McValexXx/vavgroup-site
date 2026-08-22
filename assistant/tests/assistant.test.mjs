@@ -52,9 +52,9 @@ test('Telegram start code marks the current connection generation', async () => 
         async get(key) { return this.values.get(key) || null; },
         async put(key, value) { this.values.set(key, value); },
       },
-      TELEGRAM_BOT_TOKEN: 'test-token',
-      TELEGRAM_WEBHOOK_SECRET: 'webhook-secret',
-      TELEGRAM_CONNECT_CODE: 'current-connect-code',
+      TELEGRAM_BOT_TOKEN: 'test-token\r\n',
+      TELEGRAM_WEBHOOK_SECRET: 'webhook-secret\r\n',
+      TELEGRAM_CONNECT_CODE: 'current-connect-code\r\n',
     };
     const response = await handleRequest(new Request('https://worker.example/telegram/webhook', {
       method: 'POST',
