@@ -107,7 +107,9 @@ try {
   Write-Host 'Do not paste the token into Codex, email or Telegram chats.' -ForegroundColor Yellow
   $SecureToken = Read-Host 'BotFather token (hidden)' -AsSecureString
   $BotToken = Convert-SecureValue $SecureToken
-  if ($BotToken -notmatch '^\d{6,14}:[A-Za-z0-9_-]{30,}$') { throw 'The BotFather token format is not valid.' }
+  $TokenMatch = [regex]::Match($BotToken, '(?<!\d)\d{6,14}:[A-Za-z0-9_-]{30,}(?![A-Za-z0-9_-])')
+  if (-not $TokenMatch.Success) { throw 'No valid BotFather token was found in the pasted text.' }
+  $BotToken = $TokenMatch.Value
 
   $BotInfo = Invoke-RestMethod -Method Get -Uri "https://api.telegram.org/bot$BotToken/getMe"
   if (-not $BotInfo.ok -or -not $BotInfo.result.username) { throw 'Telegram did not accept this bot token.' }
