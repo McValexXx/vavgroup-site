@@ -128,6 +128,20 @@ export function fallbackReply(message) {
     : 'Могу сориентировать по продажам, автоматизации, AI, консалтингу, networking, academy или production. Опишите одним предложением, что хотите улучшить, и я предложу подходящий следующий шаг.';
 }
 
+export function isConciseReply(value) {
+  const reply = normalize(value, 4000);
+  if (!reply) return false;
+
+  const words = reply.split(/\s+/).filter(Boolean).length;
+  const questions = (reply.match(/\?/g) || []).length;
+  const sentenceLikeParts = reply
+    .split(/(?<=[.!?])(?:\s+|$)|\n+/u)
+    .map((part) => part.replace(/^[-*•]\s*/, '').trim())
+    .filter(Boolean);
+
+  return words <= 70 && questions <= 1 && sentenceLikeParts.length <= 3;
+}
+
 function allowedOrigins(env) {
   const configured = normalize(env.ALLOWED_ORIGINS || '', 1000)
     .split(',')
@@ -268,7 +282,10 @@ async function assistantReply(env, message, history = []) {
       reply = null;
     }
   }
-  if (!reply) reply = fallbackReply(message);
+  if (!reply || !isConciseReply(reply)) {
+    reply = fallbackReply(message);
+    mode = 'guided';
+  }
   return { reply, mode };
 }
 

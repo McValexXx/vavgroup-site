@@ -148,6 +148,35 @@ test('Workers AI receives redacted text and becomes the active chat mode', async
   assert.equal(received.input.messages.at(-1).content.includes('user@example.com'), false);
 });
 
+test('chat replaces an overlong AI answer with a concise verified response', async () => {
+  const aiEnv = {
+    ...env,
+    AI: {
+      async run() {
+        return {
+          response: 'Поможем с продажам. VAV Sales проводит аудит. VAV Automation настраивает CRM. VAV AI квалифицирует лиды. VAV Consulting помогает с внедрением. Что вам нужно? Какая у вас CRM?',
+        };
+      },
+    },
+  };
+
+  const response = await handleRequest(new Request('https://worker.example/chat', {
+    method: 'POST',
+    headers: { Origin: origin, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: 'Какие услуги помогают улучшить продажи?',
+      session_id: 'session_concise_12345',
+      consent: true,
+    }),
+  }), aiEnv);
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.mode, 'guided');
+  assert.match(body.reply, /аудит[а-я]* источников лидов/i);
+  assert.equal((body.reply.match(/\?/g) || []).length, 1);
+});
+
 test('chat endpoint rejects unknown origins', async () => {
   const response = await handleRequest(new Request('https://worker.example/chat', {
     method: 'POST',
