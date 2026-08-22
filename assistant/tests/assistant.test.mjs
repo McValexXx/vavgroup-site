@@ -110,3 +110,37 @@ test('lead endpoint stays closed until Telegram is connected', async () => {
   assert.equal(response.status, 503);
   assert.equal((await response.json()).error, 'telegram_not_connected');
 });
+
+test('Telegram webhook answers an ordinary message through the assistant', async () => {
+  const telegramRequests = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    telegramRequests.push({ url: String(url), body: JSON.parse(options.body) });
+    return new Response(JSON.stringify({ ok: true, result: {} }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    const response = await handleRequest(new Request('https://worker.example/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'webhook-secret',
+      },
+      body: JSON.stringify({ message: { chat: { id: 12345 }, text: 'Cum automatizez vânzările?' } }),
+    }), {
+      ...env,
+      TELEGRAM_BOT_TOKEN: 'test-token',
+      TELEGRAM_WEBHOOK_SECRET: 'webhook-secret',
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(telegramRequests.length, 1);
+    assert.equal(telegramRequests[0].body.chat_id, '12345');
+    assert.match(telegramRequests[0].body.text, /vânzări|CRM|leaduri/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

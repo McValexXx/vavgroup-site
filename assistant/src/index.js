@@ -237,6 +237,27 @@ function aiMode(env) {
   return 'guided';
 }
 
+async function assistantReply(env, message, history = []) {
+  let reply = null;
+  let mode = 'guided';
+  try {
+    reply = await openAiReply(env, message, history);
+    if (reply) mode = 'openai';
+  } catch {
+    reply = null;
+  }
+  if (!reply) {
+    try {
+      reply = await workersAiReply(env, message, history);
+      if (reply) mode = 'workers-ai';
+    } catch {
+      reply = null;
+    }
+  }
+  if (!reply) reply = fallbackReply(message);
+  return { reply, mode };
+}
+
 function telegramUrl(env, method) {
   return `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`;
 }
@@ -314,23 +335,7 @@ async function handleChat(request, env) {
   if (!rateLimit(request, sessionId)) return json({ ok: false, error: 'rate_limited' }, 429, origin, env);
 
   const history = cleanHistory(body.history);
-  let reply = null;
-  let mode = 'guided';
-  try {
-    reply = await openAiReply(env, message, history);
-    if (reply) mode = 'openai';
-  } catch {
-    reply = null;
-  }
-  if (!reply) {
-    try {
-      reply = await workersAiReply(env, message, history);
-      if (reply) mode = 'workers-ai';
-    } catch {
-      reply = null;
-    }
-  }
-  if (!reply) reply = fallbackReply(message);
+  const { reply, mode } = await assistantReply(env, message, history);
 
   return json({
     ok: true,
@@ -410,7 +415,31 @@ async function handleTelegramWebhook(request, env) {
           ? `VAV Assistant работает. AI-режим: ${aiMode(env)}.`
           : 'Этот чат не подключён как получатель заявок VAV Group.',
       });
+      return new Response('OK');
     }
+
+    if (text.startsWith('/')) {
+      await telegramCall(env, 'sendMessage', {
+        chat_id: chatId,
+        text: 'Доступные команды: /status. Также можно написать вопрос обычным сообщением.',
+      });
+      return new Response('OK');
+    }
+
+    if (!rateLimit(request, `telegram_${chatId}`)) {
+      await telegramCall(env, 'sendMessage', {
+        chat_id: chatId,
+        text: 'Слишком много сообщений за короткое время. Попробуйте снова через несколько минут.',
+      });
+      return new Response('OK');
+    }
+
+    const { reply } = await assistantReply(env, text);
+    await telegramCall(env, 'sendMessage', {
+      chat_id: chatId,
+      text: reply.slice(0, 3900),
+      disable_web_page_preview: true,
+    });
   } catch {
     // Telegram retries non-2xx webhook responses. Return 200 after handling to avoid duplicate commands.
   }
