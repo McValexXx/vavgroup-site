@@ -1,0 +1,7 @@
+# Never commit assistant/.dev.vars. Copy this file and fill it only for local testing.
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_WEBHOOK_SECRET=
+TELEGRAM_CONNECT_CODE=
+
+# Optional. Cloudflare Workers AI is the default deployed model; this enables OpenAI instead.
+OPENAI_API_KEY=

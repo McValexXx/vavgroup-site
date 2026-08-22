@@ -4,6 +4,9 @@ dist/
 .env
 .env.*
 !.env.example
+assistant/.dev.vars
+assistant/.env
+assistant/.wrangler/
 .DS_Store
 *.log
 .pnpm-store/

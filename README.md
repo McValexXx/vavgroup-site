@@ -1,8 +1,8 @@
 # VAV Group Website
 
-Production-prepared static website for **VAV Group** at [vavgroup.pro](https://vavgroup.pro). Deployment remains intentionally disabled until the founder approves the release review.
+Production website for **VAV Group** at [vavgroup.pro](https://vavgroup.pro), deployed automatically from `main` through GitHub Pages.
 
-The site is built with Astro and TypeScript, uses no client-side framework, and ships only the small amount of JavaScript required by the contact form. Russian is the current locale; the project keeps locale configuration separate so English can be added later without replacing the page architecture.
+The site is built with Astro and TypeScript, uses no client-side framework, and ships only the small amount of JavaScript required by navigation, forms and the VAV Assistant. Russian is the current locale; the project keeps locale configuration separate so English can be added later without replacing the page architecture.
 
 ## Requirements
 
@@ -49,6 +49,7 @@ src/
   pages/          Astro routes and XML sitemap endpoint
   styles/         global design tokens and base styles
 public/           favicon, social preview, robots.txt and domain file
+assistant/        Cloudflare Worker for AI answers and Telegram lead delivery
 .github/workflows deployment to GitHub Pages
 ```
 
@@ -98,7 +99,20 @@ Formspree setup:
 
 The endpoint is intentionally treated as a public configuration value and is accepted only when it is an HTTPS `formspree.io/f/…` URL. Do not place an API key or other secret in it.
 
-Before launch, replace the privacy placeholder with a lawyer-approved policy naming the selected processor and data-retention rules.
+The published privacy policy discloses the currently disabled Formspree architecture. Obtain a qualified legal review before activating this or another processor.
+
+## VAV Assistant and Telegram
+
+The site contains a premium assistant widget with two modes:
+
+- local guided answers from approved public VAV content when no backend endpoint is configured;
+- Cloudflare Workers AI answers when the protected Worker is connected.
+
+The separate lead handoff sends the visitor's name, contact and business context to Valentin's Telegram bot. Contact details are not sent to the AI model. The Worker redacts contact-like text before any AI request and falls back to guided answers if AI is unavailable.
+
+Run [connect-vav-assistant.bat](connect-vav-assistant.bat) after creating a bot through Telegram's official `@BotFather`. The launcher handles Cloudflare authorization, protected secret storage, webhook registration, a Telegram delivery test, public runtime configuration, production checks and the GitHub push. The BotFather token is entered in a hidden prompt and is never written to GitHub or a project file.
+
+Full operational and security notes are in [assistant/README.md](assistant/README.md). Review the privacy policy and applicable personal-data localization and cross-border-transfer requirements before enabling external processing in production.
 
 ## Analytics
 

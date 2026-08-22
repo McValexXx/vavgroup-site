@@ -9,14 +9,16 @@
     "preview": "astro preview",
     "check": "astro check",
     "lint": "node scripts/lint-content.mjs",
-    "validate": "node scripts/validate-build.mjs"
+    "validate": "node scripts/validate-build.mjs",
+    "test:assistant": "node --test assistant/tests/*.test.mjs"
   },
   "dependencies": {
     "astro": "^7.2.4"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "wrangler": "^4.125.0"
   },
   "engines": {
     "node": ">=22.12.0"

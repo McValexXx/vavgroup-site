@@ -1,0 +1,428 @@
+<div class="assistant" data-assistant>
+  <button
+    class="assistant__launcher"
+    type="button"
+    aria-label="Задать вопрос"
+    aria-expanded="false"
+    aria-controls="vav-assistant-panel"
+    data-assistant-toggle
+  >
+    <span class="assistant__pulse" aria-hidden="true"></span>
+    <span>Задать вопрос</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.8h14v9.4H9.3L5 19V5.8Z"></path><path d="M8 9h8M8 12h5"></path></svg>
+  </button>
+
+  <section
+    class="assistant__panel"
+    id="vav-assistant-panel"
+    role="dialog"
+    aria-labelledby="vav-assistant-title"
+    hidden
+    data-assistant-panel
+  >
+    <header class="assistant__header">
+      <div class="assistant__identity">
+        <span class="assistant__mark" aria-hidden="true">V</span>
+        <div>
+          <strong id="vav-assistant-title">VAV Assistant</strong>
+          <span><i aria-hidden="true"></i> онлайн-помощник</span>
+        </div>
+      </div>
+      <button class="assistant__close" type="button" aria-label="Закрыть помощника" data-assistant-close>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"></path></svg>
+      </button>
+    </header>
+
+    <div class="assistant__messages" role="log" aria-live="polite" aria-relevant="additions" data-assistant-messages>
+      <div class="assistant__message assistant__message--bot">
+        <span class="assistant__avatar" aria-hidden="true">V</span>
+        <p>Здравствуйте. Помогу определить подходящее направление VAV Group и подготовить задачу для разговора с Валентином.</p>
+      </div>
+    </div>
+
+    <div class="assistant__consent" data-assistant-consent>
+      <strong>Перед началом</strong>
+      <p>Не отправляйте паспортные, платёжные, медицинские и другие чувствительные сведения.</p>
+      <label>
+        <input type="checkbox" data-assistant-consent-checkbox />
+        <span>Я согласен на обработку текста диалога, в том числе сервисом AI при его подключении, и принимаю <a href="/privacy">политику конфиденциальности</a>.</span>
+      </label>
+      <button class="assistant__start" type="button" disabled data-assistant-start>Начать диалог</button>
+    </div>
+
+    <div class="assistant__conversation" hidden data-assistant-conversation>
+      <div class="assistant__quick" aria-label="Популярные темы" data-assistant-quick>
+        <button type="button" data-quick-message="Нужно улучшить продажи и CRM">Продажи</button>
+        <button type="button" data-quick-message="Что можно автоматизировать в бизнесе?">Автоматизация</button>
+        <button type="button" data-quick-message="Какие AI-решения вы внедряете?">AI</button>
+        <button type="button" data-quick-message="С чего начать диагностику бизнеса?">Диагностика</button>
+      </div>
+
+      <button class="assistant__handoff" type="button" data-assistant-handoff>
+        <span>Передать задачу Валентину</span><span aria-hidden="true">↗</span>
+      </button>
+
+      <form class="assistant__composer" data-assistant-message-form>
+        <label class="sr-only" for="vav-assistant-message">Сообщение</label>
+        <textarea id="vav-assistant-message" rows="1" maxlength="1200" placeholder="Опишите задачу…" required data-assistant-input></textarea>
+        <button type="submit" aria-label="Отправить сообщение" data-assistant-send>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-5.5 14-2.4-5.1L5 12Z"></path><path d="m11.1 13.9 3.5-3.5"></path></svg>
+        </button>
+      </form>
+      <p class="assistant__mode" data-assistant-mode>Контролируемый режим VAV</p>
+    </div>
+
+    <div class="assistant__lead" hidden data-assistant-lead>
+      <div class="assistant__lead-heading">
+        <div>
+          <strong>Передать задачу Валентину</strong>
+          <p>Контактные данные не передаются AI-модели.</p>
+        </div>
+        <button type="button" aria-label="Вернуться к диалогу" data-assistant-lead-close>←</button>
+      </div>
+      <form data-assistant-lead-form novalidate>
+        <label>Имя <span>*</span><input name="name" type="text" autocomplete="name" maxlength="80" required /></label>
+        <label>Телефон / Telegram / Email <span>*</span><input name="contact" type="text" autocomplete="email" maxlength="120" required /></label>
+        <label>Задача <span>*</span><textarea name="message" rows="3" maxlength="1500" required data-assistant-lead-message></textarea></label>
+        <label class="assistant__lead-consent">
+          <input name="consent" type="checkbox" value="accepted" required />
+          <span>Согласен на обработку контактных данных и передачу сообщения Валентину по <a href="/privacy">политике конфиденциальности</a>.</span>
+        </label>
+        <label class="assistant__trap" aria-hidden="true">Сайт<input name="website" type="text" tabindex="-1" autocomplete="off" /></label>
+        <button class="assistant__lead-submit" type="submit">Отправить Валентину <span aria-hidden="true">↗</span></button>
+        <p class="assistant__lead-status" role="status" aria-live="polite" data-assistant-lead-status></p>
+      </form>
+    </div>
+
+    <footer class="assistant__footer">
+      <span>AI может ошибаться. Важные решения проверяет человек.</span>
+    </footer>
+  </section>
+</div>
+
+<script>
+  type ChatItem = { role: 'user' | 'assistant'; content: string };
+  type AssistantConfig = { enabled?: boolean; endpoint?: string; bot_username?: string };
+
+  const roots = document.querySelectorAll<HTMLElement>('[data-assistant]');
+
+  roots.forEach((root) => {
+    const toggle = root.querySelector<HTMLButtonElement>('[data-assistant-toggle]');
+    const close = root.querySelector<HTMLButtonElement>('[data-assistant-close]');
+    const panel = root.querySelector<HTMLElement>('[data-assistant-panel]');
+    const messages = root.querySelector<HTMLElement>('[data-assistant-messages]');
+    const consentView = root.querySelector<HTMLElement>('[data-assistant-consent]');
+    const consentCheckbox = root.querySelector<HTMLInputElement>('[data-assistant-consent-checkbox]');
+    const start = root.querySelector<HTMLButtonElement>('[data-assistant-start]');
+    const conversation = root.querySelector<HTMLElement>('[data-assistant-conversation]');
+    const messageForm = root.querySelector<HTMLFormElement>('[data-assistant-message-form]');
+    const input = root.querySelector<HTMLTextAreaElement>('[data-assistant-input]');
+    const send = root.querySelector<HTMLButtonElement>('[data-assistant-send]');
+    const quick = root.querySelector<HTMLElement>('[data-assistant-quick]');
+    const modeLabel = root.querySelector<HTMLElement>('[data-assistant-mode]');
+    const handoff = root.querySelector<HTMLButtonElement>('[data-assistant-handoff]');
+    const leadView = root.querySelector<HTMLElement>('[data-assistant-lead]');
+    const leadClose = root.querySelector<HTMLButtonElement>('[data-assistant-lead-close]');
+    const leadForm = root.querySelector<HTMLFormElement>('[data-assistant-lead-form]');
+    const leadMessage = root.querySelector<HTMLTextAreaElement>('[data-assistant-lead-message]');
+    const leadStatus = root.querySelector<HTMLElement>('[data-assistant-lead-status]');
+
+    if (!toggle || !close || !panel || !messages || !consentView || !consentCheckbox || !start || !conversation || !messageForm || !input || !send || !handoff || !leadView || !leadClose || !leadForm || !leadStatus) return;
+
+    let endpoint = '';
+    let history: ChatItem[] = [];
+    let lastFocus: HTMLElement | null = null;
+    const sessionId = typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID().replaceAll('-', '')
+      : `vav_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+    fetch('/config/assistant.json', { credentials: 'same-origin', cache: 'no-store' })
+      .then((response) => response.ok ? response.json() : null)
+      .then((config: AssistantConfig | null) => {
+        if (config?.enabled === false) {
+          root.hidden = true;
+          return;
+        }
+        try {
+          const candidate = new URL(config?.endpoint || '');
+          if (candidate.protocol === 'https:') endpoint = candidate.href.replace(/\/$/, '');
+        } catch {
+          endpoint = '';
+        }
+        if (modeLabel) modeLabel.textContent = endpoint ? 'Защищённое соединение с VAV Assistant' : 'Контролируемый режим VAV';
+      })
+      .catch(() => { endpoint = ''; });
+
+    const openPanel = () => {
+      lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : toggle;
+      panel.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      window.setTimeout(() => (consentView.hidden ? input : consentCheckbox).focus(), 20);
+    };
+
+    const closePanel = () => {
+      panel.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      lastFocus?.focus();
+    };
+
+    const appendMessage = (role: 'user' | 'assistant', text: string, temporary = false) => {
+      const item = document.createElement('div');
+      item.className = `assistant__message assistant__message--${role === 'assistant' ? 'bot' : 'user'}`;
+      if (temporary) item.dataset.typing = 'true';
+      if (role === 'assistant') {
+        const avatar = document.createElement('span');
+        avatar.className = 'assistant__avatar';
+        avatar.setAttribute('aria-hidden', 'true');
+        avatar.textContent = 'V';
+        item.append(avatar);
+      }
+      const content = document.createElement('p');
+      content.textContent = text;
+      item.append(content);
+      messages.append(item);
+      messages.scrollTop = messages.scrollHeight;
+      return item;
+    };
+
+    const localReply = (message: string) => {
+      const text = message.toLowerCase();
+      if (/(продаж|воронк|crm|лид|скрипт|конверс)/i.test(text)) return 'Для задач продаж обычно начинаем с аудита источников лидов, воронки, CRM, коммуникаций менеджеров и follow-up. Что сейчас ограничивает результат сильнее — количество лидов или конверсия?';
+      if (/(автомат|интеграц|ручн|отч[её]т|документ)/i.test(text)) return 'Автоматизация должна сокращать время ответа, ошибки и ручные операции. Сначала описываем процесс и точки потерь, затем проектируем CRM-логику, уведомления, отчётность или интеграции. Какой процесс команда повторяет вручную чаще всего?';
+      if (/(^|\s)(ai|ии|искусствен|агент|ассистент|нейро)/i.test(text)) return 'VAV AI рассматривает практичные сценарии: квалификация лидов, внутренние ассистенты, базы знаний, анализ звонков и документов. Какую конкретную задачу вы хотите передать AI?';
+      if (/(аудит|диагност|стратег|масштаб|процесс)/i.test(text)) return 'Диагностика помогает отделить симптомы от системной причины. Мы фиксируем контекст, ограничения и приоритеты, затем формируем карту внедрения. Вы хотите разобрать продажи, процессы или систему управления целиком?';
+      if (/(цен|стоим|сколько|прайс)/i.test(text)) return 'Стоимость зависит от масштаба задачи и глубины внедрения. Чтобы не называть случайную цену, передайте короткий контекст Валентину — после этого можно определить подходящий первый этап.';
+      return 'Могу сориентировать по продажам, автоматизации, AI, консалтингу, networking, academy или production. Опишите одним предложением, что хотите улучшить, и я предложу подходящий следующий шаг.';
+    };
+
+    const setBusy = (busy: boolean) => {
+      input.disabled = busy;
+      send.disabled = busy;
+      root.dataset.busy = String(busy);
+    };
+
+    const sendMessage = async (raw: string) => {
+      const message = raw.trim().slice(0, 1200);
+      if (!message || root.dataset.busy === 'true') return;
+      quick?.setAttribute('hidden', '');
+      appendMessage('user', message);
+      history.push({ role: 'user', content: message });
+      input.value = '';
+      input.style.height = '';
+      setBusy(true);
+      const typing = appendMessage('assistant', 'Печатает…', true);
+
+      let reply = '';
+      let mode = 'guided';
+      if (endpoint) {
+        try {
+          const response = await fetch(`${endpoint}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message,
+              history: history.slice(0, -1).slice(-8),
+              session_id: sessionId,
+              consent: true,
+              page: window.location.href,
+              website: '',
+            }),
+          });
+          if (!response.ok) throw new Error('Assistant request failed');
+          const data = await response.json();
+          reply = typeof data.reply === 'string' ? data.reply : '';
+          mode = data.mode === 'openai' || data.mode === 'workers-ai' || data.mode === 'ai' ? 'ai' : 'guided';
+        } catch {
+          reply = localReply(message);
+        }
+      } else {
+        await new Promise((resolve) => window.setTimeout(resolve, 350));
+        reply = localReply(message);
+      }
+
+      typing.remove();
+      const finalReply = reply || localReply(message);
+      appendMessage('assistant', finalReply);
+      history.push({ role: 'assistant', content: finalReply });
+      history = history.slice(-10);
+      if (modeLabel) modeLabel.textContent = mode === 'ai' ? 'Ответ подготовлен AI по публичной базе VAV' : 'Контролируемый режим VAV';
+      setBusy(false);
+      input.focus();
+    };
+
+    toggle.addEventListener('click', () => panel.hidden ? openPanel() : closePanel());
+    close.addEventListener('click', closePanel);
+    consentCheckbox.addEventListener('change', () => { start.disabled = !consentCheckbox.checked; });
+    start.addEventListener('click', () => {
+      if (!consentCheckbox.checked) return;
+      consentView.hidden = true;
+      conversation.hidden = false;
+      input.focus();
+    });
+
+    root.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !panel.hidden) closePanel();
+    });
+
+    quick?.querySelectorAll<HTMLButtonElement>('[data-quick-message]').forEach((button) => {
+      button.addEventListener('click', () => sendMessage(button.dataset.quickMessage || ''));
+    });
+
+    messageForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!messageForm.checkValidity()) return messageForm.reportValidity();
+      void sendMessage(input.value);
+    });
+
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = `${Math.min(input.scrollHeight, 112)}px`;
+    });
+
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        messageForm.requestSubmit();
+      }
+    });
+
+    handoff.addEventListener('click', () => {
+      conversation.hidden = true;
+      leadView.hidden = false;
+      const lastUserMessage = [...history].reverse().find((item) => item.role === 'user');
+      if (leadMessage && !leadMessage.value) leadMessage.value = lastUserMessage?.content || '';
+      leadForm.elements.namedItem('name') instanceof HTMLElement && (leadForm.elements.namedItem('name') as HTMLElement).focus();
+    });
+
+    leadClose.addEventListener('click', () => {
+      leadView.hidden = true;
+      conversation.hidden = false;
+      input.focus();
+    });
+
+    leadForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      leadStatus.textContent = '';
+      leadStatus.removeAttribute('data-state');
+      if (!leadForm.checkValidity()) return leadForm.reportValidity();
+      if (!endpoint) {
+        leadStatus.dataset.state = 'info';
+        leadStatus.textContent = 'Telegram ещё не подключён. Сейчас можно написать на valentin@vavgroup.pro или позвонить: +7 (922) 461-55-17.';
+        return;
+      }
+
+      const submitButton = leadForm.querySelector<HTMLButtonElement>('button[type="submit"]');
+      if (submitButton) submitButton.disabled = true;
+      leadStatus.textContent = 'Отправляем…';
+      try {
+        const formData = new FormData(leadForm);
+        const response = await fetch(`${endpoint}/lead`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: String(formData.get('name') || ''),
+            contact: String(formData.get('contact') || ''),
+            message: String(formData.get('message') || ''),
+            website: String(formData.get('website') || ''),
+            consent: formData.get('consent') === 'accepted',
+            page: window.location.href,
+            transcript: history.slice(-8),
+            session_id: sessionId,
+          }),
+        });
+        if (!response.ok) throw new Error('Lead request failed');
+        leadForm.reset();
+        leadStatus.dataset.state = 'success';
+        leadStatus.textContent = 'Задача отправлена Валентину в Telegram. Он свяжется с вами после изучения контекста.';
+      } catch {
+        leadStatus.dataset.state = 'error';
+        leadStatus.textContent = 'Не удалось отправить сообщение. Напишите на valentin@vavgroup.pro или позвоните: +7 (922) 461-55-17.';
+      } finally {
+        if (submitButton) submitButton.disabled = false;
+      }
+    });
+  });
+</script>
+
+<style>
+  .assistant { position: fixed; z-index: 80; right: max(1.25rem, env(safe-area-inset-right)); bottom: max(1.25rem, env(safe-area-inset-bottom)); }
+  .assistant__launcher { min-height: 3.35rem; display: inline-flex; align-items: center; gap: .65rem; padding: .8rem 1rem; border: 1px solid color-mix(in srgb, var(--ink) 90%, white); border-radius: .75rem; color: #fff; background: var(--ink); box-shadow: 0 18px 45px rgba(11, 23, 32, .2); font-size: .8rem; font-weight: 700; cursor: pointer; transition: translate .2s ease, background-color .2s ease; }
+  .assistant__launcher:hover { background: var(--accent-hover); translate: 0 -2px; }
+  .assistant__launcher svg { width: 1.15rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+  .assistant__pulse { width: .5rem; height: .5rem; border-radius: 50%; background: #75cfb0; box-shadow: 0 0 0 .28rem rgba(117, 207, 176, .13); }
+  .assistant__panel { position: absolute; right: 0; bottom: 4.25rem; width: min(25rem, calc(100vw - 2rem)); height: min(41rem, calc(100dvh - 7rem)); overflow: hidden; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); box-shadow: 0 28px 90px rgba(11, 23, 32, .2); }
+  .assistant__panel[hidden] { display: none; }
+  .assistant__header { min-height: 4.7rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .9rem 1rem; color: #fff; background: var(--ink); }
+  .assistant__identity { display: flex; align-items: center; gap: .75rem; }
+  .assistant__mark, :global(.assistant__avatar) { display: grid; place-items: center; flex: 0 0 auto; border-radius: .55rem; color: var(--ink); background: #fff; font-size: .72rem; font-weight: 800; }
+  .assistant__mark { width: 2.25rem; height: 2.25rem; }
+  .assistant__identity strong, .assistant__identity span { display: block; }
+  .assistant__identity strong { font-size: .84rem; }
+  .assistant__identity span { margin-top: .2rem; color: #bfc9c5; font-size: .64rem; }
+  .assistant__identity i { display: inline-block; width: .4rem; height: .4rem; margin-right: .3rem; border-radius: 50%; background: #75cfb0; }
+  .assistant__close { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border: 0; border-radius: .45rem; color: #dce5e1; background: rgba(255, 255, 255, .07); cursor: pointer; }
+  .assistant__close:hover { background: rgba(255, 255, 255, .14); }
+  .assistant__close svg { width: 1.1rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-width: 1.6; }
+  .assistant__messages { height: calc(100% - 13.2rem); min-height: 12rem; overflow-y: auto; padding: 1rem; background: var(--surface-muted); overscroll-behavior: contain; }
+  :global(.assistant__message) { display: flex; align-items: flex-start; gap: .55rem; margin-bottom: .85rem; }
+  :global(.assistant__message p) { max-width: 84%; padding: .72rem .8rem; border: 1px solid var(--line); border-radius: .25rem .85rem .85rem .85rem; color: var(--muted-strong); background: #fff; font-size: .75rem; line-height: 1.55; box-shadow: var(--shadow-sm); white-space: pre-wrap; }
+  :global(.assistant__message--user) { justify-content: flex-end; }
+  :global(.assistant__message--user p) { border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); border-radius: .85rem .25rem .85rem .85rem; color: #fff; background: var(--accent); }
+  :global(.assistant__message[data-typing='true'] p) { color: var(--muted); font-style: italic; }
+  :global(.assistant__avatar) { width: 1.65rem; height: 1.65rem; margin-top: .1rem; color: #fff; background: var(--ink); font-size: .58rem; }
+  .assistant__consent { position: absolute; inset: 4.7rem 0 2.15rem; display: grid; align-content: center; gap: .8rem; padding: 1.5rem; background: rgba(252, 253, 252, .97); }
+  .assistant__consent[hidden] { display: none; }
+  .assistant__consent > strong { font-size: .9rem; }
+  .assistant__consent > p { color: var(--muted-strong); font-size: .72rem; line-height: 1.55; }
+  .assistant__consent label, .assistant__lead-consent { display: grid; grid-template-columns: 1rem 1fr; align-items: start; gap: .65rem; cursor: pointer; }
+  .assistant__consent input, .assistant__lead-consent input { width: 1rem; height: 1rem; margin-top: .15rem; accent-color: var(--accent); }
+  .assistant__consent label span, .assistant__lead-consent span { color: var(--muted-strong); font-size: .68rem; line-height: 1.5; }
+  .assistant__consent a, .assistant__lead a { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 2px; }
+  .assistant__start, .assistant__lead-submit { min-height: 3rem; border: 0; border-radius: .5rem; color: #fff; background: var(--ink); font-size: .78rem; font-weight: 700; cursor: pointer; }
+  .assistant__start:disabled { cursor: not-allowed; opacity: .45; }
+  .assistant__conversation { position: absolute; inset: auto 0 2.15rem; border-top: 1px solid var(--line); background: var(--surface); }
+  .assistant__conversation[hidden] { display: none; }
+  .assistant__quick { display: flex; gap: .4rem; overflow-x: auto; padding: .65rem .8rem 0; scrollbar-width: none; }
+  .assistant__quick[hidden] { display: none; }
+  .assistant__quick button { flex: 0 0 auto; padding: .42rem .6rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted-strong); background: #fff; font-size: .64rem; cursor: pointer; }
+  .assistant__quick button:hover { border-color: var(--accent); color: var(--accent-hover); }
+  .assistant__handoff { width: calc(100% - 1.6rem); display: flex; align-items: center; justify-content: space-between; margin: .65rem .8rem 0; padding: .55rem .7rem; border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line)); border-radius: .45rem; color: var(--accent-hover); background: color-mix(in srgb, var(--accent) 5%, white); font-size: .68rem; font-weight: 700; cursor: pointer; }
+  .assistant__composer { display: grid; grid-template-columns: 1fr 2.65rem; align-items: end; gap: .5rem; padding: .65rem .8rem .25rem; }
+  .assistant__composer textarea { max-height: 7rem; min-height: 2.65rem; padding: .72rem .75rem; resize: none; border: 1px solid var(--line); border-radius: .5rem; color: var(--ink); background: #fff; font-size: .75rem; line-height: 1.45; }
+  .assistant__composer textarea:focus { border-color: var(--accent); outline: 3px solid color-mix(in srgb, var(--accent) 10%, white); }
+  .assistant__composer button { width: 2.65rem; height: 2.65rem; display: grid; place-items: center; border: 0; border-radius: .5rem; color: #fff; background: var(--ink); cursor: pointer; }
+  .assistant__composer button:disabled { cursor: wait; opacity: .55; }
+  .assistant__composer svg { width: 1.15rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
+  .assistant__mode { padding: 0 .8rem .55rem; color: var(--muted); font-family: var(--mono); font-size: .55rem; }
+  .assistant__lead { position: absolute; inset: 4.7rem 0 2.15rem; overflow-y: auto; padding: 1rem; background: var(--surface); }
+  .assistant__lead[hidden] { display: none; }
+  .assistant__lead-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .assistant__lead-heading strong { font-size: .86rem; }
+  .assistant__lead-heading p { margin-top: .25rem; color: var(--muted); font-size: .64rem; }
+  .assistant__lead-heading button { border: 0; color: var(--muted-strong); background: transparent; font-size: 1rem; cursor: pointer; }
+  .assistant__lead form { display: grid; gap: .7rem; margin-top: 1rem; }
+  .assistant__lead form > label:not(.assistant__lead-consent):not(.assistant__trap) { display: grid; gap: .35rem; color: var(--muted-strong); font-size: .65rem; font-weight: 650; }
+  .assistant__lead form > label > span { color: var(--accent); }
+  .assistant__lead input[type='text'], .assistant__lead textarea { width: 100%; padding: .68rem .7rem; border: 1px solid var(--line); border-radius: .45rem; color: var(--ink); background: #fff; font-size: .72rem; line-height: 1.45; }
+  .assistant__lead input[type='text'] { height: 2.75rem; }
+  .assistant__lead textarea { resize: vertical; }
+  .assistant__lead-consent span { color: var(--muted-strong) !important; font-weight: 450; }
+  .assistant__trap { position: absolute; left: -10000px; }
+  .assistant__lead-submit:disabled { cursor: wait; opacity: .55; }
+  .assistant__lead-status { min-height: 2rem; color: var(--muted-strong); font-size: .66rem; line-height: 1.5; }
+  .assistant__lead-status[data-state='success'] { color: var(--success); }
+  .assistant__lead-status[data-state='error'] { color: var(--danger); }
+  .assistant__footer { position: absolute; inset: auto 0 0; min-height: 2.15rem; display: grid; place-items: center; padding: .45rem .75rem; border-top: 1px solid var(--line); color: var(--muted); background: var(--surface); font-size: .54rem; text-align: center; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+  @media (max-width: 600px) {
+    .assistant { right: max(.75rem, env(safe-area-inset-right)); bottom: max(.75rem, env(safe-area-inset-bottom)); }
+    .assistant__launcher { min-height: 3.1rem; }
+    .assistant__launcher > span:nth-child(2) { display: none; }
+    .assistant__panel { position: fixed; inset: auto 0 0; width: 100%; height: min(83dvh, 44rem); border-width: 1px 0 0; border-radius: 1rem 1rem 0 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .assistant__launcher { transition: none; }
+  }
+</style>
