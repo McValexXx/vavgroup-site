@@ -104,7 +104,7 @@ test('chat endpoint returns a guided answer for an allowed site origin', async (
   assert.match(body.reply, /Автоматизация|процесс/i);
 });
 
-test('chat endpoint immediately offers direct Telegram contact when Valentin is requested', async () => {
+test('site chat routes Valentin requests through the official Telegram bot', async () => {
   const response = await handleRequest(new Request('https://worker.example/chat', {
     method: 'POST',
     headers: { Origin: origin, 'Content-Type': 'application/json' },
@@ -117,7 +117,8 @@ test('chat endpoint immediately offers direct Telegram contact when Valentin is 
   }), env);
   assert.equal(response.status, 200);
   const body = await response.json();
-  assert.match(body.reply, /t\.me\/sendmeyrlocation/);
+  assert.match(body.reply, /t\.me\/VAVGroupBOT/);
+  assert.equal(body.reply.includes('sendmeyrlocation'), false);
   assert.equal(body.mode, 'guided');
 });
 

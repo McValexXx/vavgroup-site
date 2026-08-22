@@ -41,8 +41,8 @@ const SYSTEM_INSTRUCTIONS = `
 7. Если данных недостаточно, задай один полезный уточняющий вопрос.
 8. В подходящий момент предложи диагностику или разговор с Валентином, но без давления.
 9. Если человек прямо просит связать его с Валентином, консультантом или живым человеком,
-   не квалифицируй дальше и не отправляй заполнять форму. Сразу дай прямую ссылку
-   https://t.me/sendmeyrlocation и предложи написать Валентину в Telegram.
+   не квалифицируй дальше и не проси лишние данные. Канал связи выбирает приложение;
+   не придумывай и не подставляй свою ссылку.
 
 Публичная база VAV Group:
 ${PUBLIC_KNOWLEDGE}
@@ -64,13 +64,19 @@ function isRomanian(text) {
 }
 
 function wantsHumanHandoff(value) {
-  return /(соед[ие]н|связ(?:аться|и)|поговор(?:ить|ю)|написать|жив(?:ой|ым)\s+человек|оператор|консультант).{0,35}валентин|валентин.{0,35}(соед[ие]н|связ|поговор|напис)|(?:vreau|doresc|pot|aș vrea).{0,30}(?:vorb|discut|scri).{0,25}valentin|(?:vorb|discut|scri).{0,25}(?:direct|cu).{0,20}valentin|(?:connect|talk|speak|message).{0,30}valentin|human\s+(?:agent|consultant)/i.test(normalize(value, 500));
+  return /(соед[ие]н|связ(?:аться|и)|поговор(?:ить|ю)|написать).{0,35}валентин|валентин.{0,35}(соед[ие]н|связ|поговор|напис)|жив(?:ой|ым)\s+человек|оператор|консультант|(?:vreau|doresc|pot|aș vrea).{0,30}(?:vorb|discut|scri).{0,25}(?:valentin|om|persoan|consultant|operator)|(?:vorb|discut|scri).{0,25}(?:direct|cu).{0,20}valentin|(?:connect|talk|speak|message).{0,30}(?:valentin|human|consultant|operator)|human\s+(?:agent|consultant)/i.test(normalize(value, 500));
 }
 
 function humanHandoffReply(message) {
   return isRomanian(message)
     ? 'Sigur. Îi puteți scrie direct lui Valentin în Telegram: https://t.me/sendmeyrlocation'
     : 'Конечно. Напишите Валентину напрямую в Telegram: https://t.me/sendmeyrlocation';
+}
+
+function siteBotHandoffReply(message) {
+  return isRomanian(message)
+    ? 'Sigur. Continuați prin botul oficial VAVGroupBOT: https://t.me/VAVGroupBOT. Solicitarea va fi transmisă lui Valentin.'
+    : 'Конечно. Продолжите в официальном боте VAVGroupBOT: https://t.me/VAVGroupBOT. Обращение будет передано Валентину.';
 }
 
 export function fallbackReply(message) {
@@ -494,7 +500,7 @@ async function handleChat(request, env) {
   if (wantsHumanHandoff(message)) {
     return json({
       ok: true,
-      reply: humanHandoffReply(message),
+      reply: siteBotHandoffReply(message),
       mode: 'guided',
       can_notify: Boolean(await adminChatId(env)),
     }, 200, origin, env);
