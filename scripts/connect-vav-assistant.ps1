@@ -40,6 +40,72 @@ function Convert-SecureValue {
   finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($Pointer) }
 }
 
+function Read-BotTokenFromDialog {
+  Add-Type -AssemblyName System.Windows.Forms
+  Add-Type -AssemblyName System.Drawing
+
+  $Dialog = New-Object System.Windows.Forms.Form
+  $Dialog.Text = 'VAV Assistant - BotFather token'
+  $Dialog.StartPosition = 'CenterScreen'
+  $Dialog.Size = New-Object System.Drawing.Size(640, 230)
+  $Dialog.MinimumSize = New-Object System.Drawing.Size(640, 230)
+  $Dialog.MaximizeBox = $false
+  $Dialog.MinimizeBox = $false
+  $Dialog.TopMost = $true
+  $Dialog.FormBorderStyle = 'FixedDialog'
+
+  $Title = New-Object System.Windows.Forms.Label
+  $Title.Text = 'Lipiți tokenul nou BotFather în chenarul de mai jos'
+  $Title.Location = New-Object System.Drawing.Point(22, 20)
+  $Title.Size = New-Object System.Drawing.Size(580, 24)
+  $Title.Font = New-Object System.Drawing.Font('Segoe UI', 11, [System.Drawing.FontStyle]::Bold)
+  $Dialog.Controls.Add($Title)
+
+  $Hint = New-Object System.Windows.Forms.Label
+  $Hint.Text = 'Faceți clic în chenar și apăsați Ctrl+V. Tokenul este ascuns și nu este salvat în GitHub sau într-un fișier.'
+  $Hint.Location = New-Object System.Drawing.Point(22, 50)
+  $Hint.Size = New-Object System.Drawing.Size(580, 38)
+  $Hint.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+  $Dialog.Controls.Add($Hint)
+
+  $TokenBox = New-Object System.Windows.Forms.TextBox
+  $TokenBox.Location = New-Object System.Drawing.Point(25, 96)
+  $TokenBox.Size = New-Object System.Drawing.Size(575, 30)
+  $TokenBox.Font = New-Object System.Drawing.Font('Consolas', 11)
+  $TokenBox.UseSystemPasswordChar = $true
+  $TokenBox.ShortcutsEnabled = $true
+  $Dialog.Controls.Add($TokenBox)
+
+  $ContinueButton = New-Object System.Windows.Forms.Button
+  $ContinueButton.Text = 'Continuă'
+  $ContinueButton.Location = New-Object System.Drawing.Point(380, 142)
+  $ContinueButton.Size = New-Object System.Drawing.Size(105, 34)
+  $ContinueButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
+  $Dialog.Controls.Add($ContinueButton)
+
+  $CancelButton = New-Object System.Windows.Forms.Button
+  $CancelButton.Text = 'Anulează'
+  $CancelButton.Location = New-Object System.Drawing.Point(495, 142)
+  $CancelButton.Size = New-Object System.Drawing.Size(105, 34)
+  $CancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+  $Dialog.Controls.Add($CancelButton)
+
+  $Dialog.AcceptButton = $ContinueButton
+  $Dialog.CancelButton = $CancelButton
+  $Dialog.Add_Shown({ $TokenBox.Focus() })
+
+  try {
+    $Result = $Dialog.ShowDialog()
+    if ($Result -ne [System.Windows.Forms.DialogResult]::OK) {
+      throw 'BotFather token entry was cancelled.'
+    }
+    return [string]$TokenBox.Text
+  } finally {
+    $TokenBox.Text = ''
+    $Dialog.Dispose()
+  }
+}
+
 function Set-WorkerSecret {
   param([string]$Name, [string]$Value, [string]$Wrangler)
   Write-Host "Setting protected server value: $Name" -ForegroundColor DarkCyan
@@ -104,9 +170,8 @@ try {
   $WorkerEndpoint = $EndpointMatch.Value.TrimEnd('/')
 
   Write-Host "`nOpen BotFather, create the VAV bot, copy its HTTP API token, then return here." -ForegroundColor Yellow
-  Write-Host 'Do not paste the token into Codex, email or Telegram chats.' -ForegroundColor Yellow
-  $SecureToken = Read-Host 'BotFather token (hidden)' -AsSecureString
-  $BotToken = Convert-SecureValue $SecureToken
+  Write-Host 'A protected paste window will open. The token is not written to GitHub or a file.' -ForegroundColor Yellow
+  $BotToken = Read-BotTokenFromDialog
   $TokenMatch = [regex]::Match($BotToken, '(?<!\d)\d{6,14}:[A-Za-z0-9_-]{30,}(?![A-Za-z0-9_-])')
   if (-not $TokenMatch.Success) { throw 'No valid BotFather token was found in the pasted text.' }
   $BotToken = $TokenMatch.Value
