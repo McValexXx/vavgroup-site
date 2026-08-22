@@ -18,6 +18,13 @@ try {
     <div class="field"><label for="email">Email <span>*</span></label><input id="email" name="email" type="email" autocomplete="email" required /></div>
     <div class="field field--wide"><label for="service">Что хотите улучшить? <span>*</span></label><select id="service" name="service" required><option value="">Выберите направление</option><option>Продажи</option><option>Автоматизация</option><option>AI</option><option>Консалтинг</option><option>Networking</option><option>Academy</option><option>Production</option><option>Другое</option></select></div>
     <div class="field field--wide"><label for="message">Сообщение</label><textarea id="message" name="message" rows="5" placeholder="Коротко опишите контекст, задачу или текущее ограничение"></textarea></div>
+    <div class="field field--wide consent-field">
+      <label class="consent" for="privacy-consent">
+        <input id="privacy-consent" name="privacy_consent" type="checkbox" value="accepted" required disabled={!endpointConfigured} />
+        <span>Я даю согласие на обработку указанных персональных данных для ответа на обращение и принимаю <a href="/privacy">политику конфиденциальности</a>.</span>
+      </label>
+      <input type="hidden" name="privacy_policy_version" value="2026-08-22" />
+    </div>
   </div>
   <div class="honeypot" aria-hidden="true"><label for="website">Не заполняйте это поле</label><input id="website" name="_gotcha" type="text" tabindex="-1" autocomplete="off" /></div>
   {!endpointConfigured && (
@@ -27,7 +34,7 @@ try {
     </aside>
   )}
   <div class="form-bottom">
-    <p>Отправляя форму, вы соглашаетесь с <a href="/privacy">политикой конфиденциальности</a>.</p>
+    <p>Согласие можно отозвать, написав на <a href="mailto:valentin@vavgroup.pro">valentin@vavgroup.pro</a>.</p>
     <button class="button" type="submit" data-submit disabled={!endpointConfigured}>{endpointConfigured ? 'Отправить запрос' : 'Форма не подключена'} <span aria-hidden="true">↗</span></button>
   </div>
   <p class="form-status" data-form-status role="status" aria-live="polite" aria-atomic="true"></p>
@@ -100,6 +107,12 @@ try {
   textarea { min-height: 9rem; padding: .9rem; resize: vertical; line-height: 1.55; }
   input:hover, select:hover, textarea:hover { border-color: #aeb9b3; }
   input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: 3px solid color-mix(in srgb, var(--accent) 12%, white); }
+  .consent-field { margin-top: .25rem; }
+  .consent { display: grid; grid-template-columns: 1rem 1fr; align-items: start; gap: .7rem; cursor: pointer; }
+  .consent input { width: 1rem; height: 1rem; margin-top: .15rem; accent-color: var(--accent); }
+  .consent span { color: var(--muted-strong); font-size: .72rem; font-weight: 450; line-height: 1.55; }
+  .consent a { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 2px; }
+  .consent:has(input:disabled) { cursor: not-allowed; opacity: .68; }
   .honeypot { position: absolute; left: -10000px; }
   .form-fallback { margin-top: 1.5rem; padding: 1.1rem 1.2rem; border-left: 3px solid var(--accent); color: var(--muted-strong); background: var(--surface-muted); }
   .form-fallback strong { color: var(--ink); font-size: .82rem; }

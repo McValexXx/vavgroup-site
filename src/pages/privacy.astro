@@ -1,13 +1,313 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Breadcrumbs from '@/components/Breadcrumbs.astro';
+
+const policyVersion = '22 августа 2026 года';
 ---
 
-<BaseLayout title="Политика конфиденциальности — VAV Group" description="Информация о конфиденциальности и обработке обращений на сайте VAV Group." noindex>
-  <section class="legal-page"><div class="container legal-grid"><aside><Breadcrumbs items={[{ label: 'VAV Group', href: '/' }, { label: 'Конфиденциальность' }]} /><p>СТАТУС ДОКУМЕНТА</p><strong>Черновик для юридического согласования</strong></aside><article><p class="eyebrow"><span></span> Документ</p><h1>Политика конфиденциальности</h1><div class="notice"><b>Важно</b><p>Это структурный placeholder, а не утверждённая юридическая редакция. Перед публикацией форму, перечень данных, сроки хранения, обработчиков и применимое законодательство должен проверить профильный юрист.</p></div><h2>1. Общие положения</h2><p>[LEGAL_TEXT_TO_BE_ADDED]</p><h2>2. Какие данные могут обрабатываться</h2><p>Данные, добровольно указанные в форме: имя, компания, контакт в телефоне или Telegram, email, выбранное направление и текст сообщения.</p><h2>3. Цели обработки</h2><p>Ответ на обращение, подготовка к обсуждению задачи и деловая коммуникация по инициативе пользователя.</p><h2>4. Обработчики и форма</h2><p>[FORM_PROVIDER_AND_DATA_PROCESSING_TERMS_TO_BE_ADDED]</p><h2>5. Аналитика и cookies</h2><p>[ANALYTICS_AND_COOKIE_TERMS_TO_BE_ADDED]</p><h2>6. Сроки, права и контакты</h2><p>[LEGAL_TEXT_TO_BE_ADDED]</p><p class="updated">Дата редакции: [DATE_TO_BE_ADDED]</p></article></div></section>
+<BaseLayout
+  title="Политика обработки персональных данных — VAV Group"
+  description="Политика обработки персональных данных и конфиденциальности на сайте VAV Group."
+>
+  <section class="legal-page">
+    <div class="container legal-grid">
+      <aside class="legal-sidebar">
+        <Breadcrumbs items={[{ label: 'VAV Group', href: '/' }, { label: 'Конфиденциальность' }]} />
+        <div class="document-meta">
+          <p>СТАТУС ДОКУМЕНТА</p>
+          <strong>Действующая редакция</strong>
+          <span>от {policyVersion}</span>
+        </div>
+        <nav class="legal-nav" aria-label="Содержание политики">
+          <a href="#general">Общие положения</a>
+          <a href="#data">Какие данные обрабатываются</a>
+          <a href="#purposes">Цели и основания</a>
+          <a href="#providers">Сервисы и передача данных</a>
+          <a href="#rights">Права пользователя</a>
+          <a href="#contacts">Контакты оператора</a>
+        </nav>
+      </aside>
+
+      <article>
+        <p class="eyebrow"><span></span> Документ</p>
+        <h1>Политика обработки персональных данных и конфиденциальности</h1>
+        <p class="lead">
+          Политика объясняет, какие данные могут обрабатываться на сайте VAV Group, зачем они нужны,
+          кому могут передаваться и как пользователь может реализовать свои права.
+        </p>
+
+        <div class="notice">
+          <b>Коротко</b>
+          <p>
+            VAV Group запрашивает только данные, необходимые для ответа на обращение. Данные не
+            продаются, а рекламные рассылки не подключаются без отдельного согласия.
+          </p>
+        </div>
+
+        <section id="general">
+          <h2>1. Общие положения</h2>
+          <p>
+            Настоящая Политика применяется к сайту <a href="https://vavgroup.pro">vavgroup.pro</a>{' '}
+            (далее — «Сайт») и определяет порядок обработки и защиты персональных данных его
+            пользователей.
+          </p>
+          <p>
+            Оператор персональных данных — Валентин Стратила, администратор сайта и представитель
+            VAV Group (далее — «Оператор»). Контакты Оператора приведены в разделе 11.
+          </p>
+          <p>
+            Оператор руководствуется Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных
+            данных» и иными применимыми нормами законодательства Российской Федерации.
+          </p>
+          <p>
+            Простое посещение Сайта не считается согласием на рекламную коммуникацию. Согласие на
+            обработку данных, указанных в форме, выражается отдельным действием пользователя —
+            установкой отметки в поле согласия и отправкой формы. Пользователь может вместо формы
+            самостоятельно связаться с Оператором по email или телефону.
+          </p>
+          <p>
+            Сайт не предназначен для сбора специальных категорий персональных данных, биометрических
+            данных или сведений о несовершеннолетних. Просим не указывать такие сведения в свободном
+            поле сообщения. Передавая данные другого лица, пользователь подтверждает наличие законного
+            основания для такой передачи.
+          </p>
+        </section>
+
+        <section id="data">
+          <h2>2. Какие данные могут обрабатываться</h2>
+          <h3>2.1. Данные, которые предоставляет пользователь</h3>
+          <ul>
+            <li>имя;</li>
+            <li>название компании;</li>
+            <li>номер телефона или контакт в Telegram;</li>
+            <li>адрес электронной почты;</li>
+            <li>выбранное направление VAV Group;</li>
+            <li>текст сообщения и сведения, добровольно включённые в деловую переписку.</li>
+          </ul>
+          <h3>2.2. Технические данные</h3>
+          <p>
+            При открытии Сайта инфраструктура хостинга может автоматически обрабатывать IP-адрес,
+            дату и время запроса, адрес запрошенной страницы, сведения о браузере и устройстве,
+            источник перехода, а также технические события, необходимые для доставки страниц,
+            диагностики и защиты от злоупотреблений.
+          </p>
+        </section>
+
+        <section id="purposes">
+          <h2>3. Цели и правовые основания обработки</h2>
+          <div class="purpose-list">
+            <div>
+              <strong>Ответ на обращение</strong>
+              <p>Уточнение задачи, подготовка консультации или предложения и обратная связь по инициативе пользователя.</p>
+            </div>
+            <div>
+              <strong>Деловая коммуникация</strong>
+              <p>Обсуждение сотрудничества, заключение и исполнение договорённостей или договора.</p>
+            </div>
+            <div>
+              <strong>Работа и безопасность Сайта</strong>
+              <p>Доставка страниц, предотвращение злоупотреблений, диагностика ошибок и защита инфраструктуры.</p>
+            </div>
+            <div>
+              <strong>Требования закона</strong>
+              <p>Исполнение обязанностей Оператора, если сохранение или предоставление данных требуется законом.</p>
+            </div>
+          </div>
+          <p>
+            Правовыми основаниями являются согласие субъекта персональных данных, действия по его
+            инициативе до заключения договора, исполнение договора, требования закона, а также
+            осуществление прав и законных интересов Оператора при условии, что права пользователя не
+            нарушаются.
+          </p>
+          <p>
+            Рекламные и информационные рассылки могут направляться только после получения отдельного
+            предварительного согласия. Отправка контактной формы сама по себе не подписывает
+            пользователя на рассылку.
+          </p>
+        </section>
+
+        <section id="processing">
+          <h2>4. Порядок и способы обработки</h2>
+          <p>
+            Обработка может включать сбор, запись, систематизацию, накопление, хранение, уточнение,
+            извлечение, использование, передачу уполномоченному обработчику, блокирование, удаление и
+            уничтожение данных. Обработка выполняется с использованием средств автоматизации или без
+            них — только в объёме, необходимом для заявленных целей.
+          </p>
+          <p>
+            Оператор не публикует персональные данные пользователя и не принимает исключительно на их
+            основе автоматизированные решения, порождающие для пользователя юридические последствия.
+            Передача возможна по поручению Оператора техническим поставщикам, по требованию закона или
+            по инициативе самого пользователя.
+          </p>
+        </section>
+
+        <section id="providers">
+          <h2>5. Сервисы, обработчики и передача данных</h2>
+          <p>
+            Статические страницы Сайта размещены на GitHub Pages. Поставщик инфраструктуры может
+            обрабатывать технические данные соединения в соответствии со своими условиями и политикой
+            конфиденциальности, в том числе на инфраструктуре за пределами Российской Федерации.
+            Содержание контактной формы не передаётся в GitHub Pages.
+          </p>
+          <p>
+            В архитектуре Сайта предусмотрена возможность подключения Formspree для обработки
+            контактной формы. На дату настоящей редакции онлайн-форма не активирована: адрес
+            обработчика не настроен, кнопка отправки заблокирована, данные через Formspree не
+            передаются. До активации Оператор должен проверить применимые требования, определить сроки
+            хранения, оформить поручение на обработку и при необходимости обновить настоящую Политику
+            и текст согласия.
+          </p>
+          <p>
+            Formspree сообщает, что его сервис размещён в инфраструктуре AWS в США. Поэтому его
+            подключение может повлечь трансграничную передачу персональных данных. Такая передача не
+            должна выполняться до соблюдения требований российского законодательства, включая
+            требования к локализации, уведомлению уполномоченного органа и получению необходимого
+            согласия, когда оно требуется.
+          </p>
+          <p>
+            Обращения, направленные напрямую на корпоративный email, обрабатываются с использованием
+            почтовой инфраструктуры REG.RU в соответствии с условиями и политикой конфиденциальности
+            этого поставщика.
+          </p>
+        </section>
+
+        <section id="cookies">
+          <h2>6. Аналитика и cookies</h2>
+          <p>
+            На дату настоящей редакции на Сайте не настроены Яндекс Метрика, Google Analytics,
+            рекламные пиксели или профилирующая аналитика. Сайт не устанавливает собственные
+            рекламные cookies.
+          </p>
+          <p>
+            Техническая инфраструктура может использовать необходимые механизмы и журналы соединений
+            для загрузки страниц, обеспечения безопасности и диагностики. Если на Сайте появится
+            аналитика или иная необязательная технология отслеживания, до её включения Политика будет
+            обновлена, а пользователю будет предоставлен необходимый выбор.
+          </p>
+        </section>
+
+        <section id="retention">
+          <h2>7. Сроки хранения и удаление</h2>
+          <p>
+            Данные обращения и связанная с ним переписка хранятся не дольше 12 месяцев с даты
+            последнего содержательного контакта, если сотрудничество не продолжено. Если заключён
+            договор или закон требует более длительного хранения, применяются соответствующие сроки.
+          </p>
+          <p>
+            После достижения цели обработки, истечения срока хранения или отзыва согласия данные
+            удаляются или обезличиваются в сроки, предусмотренные статьёй 21 Федерального закона
+            № 152-ФЗ, если у Оператора отсутствует другое законное основание для продолжения обработки.
+            Срок хранения технических журналов определяется поставщиком инфраструктуры и требованиями
+            безопасности.
+          </p>
+        </section>
+
+        <section id="security">
+          <h2>8. Защита данных</h2>
+          <p>
+            Оператор применяет разумные правовые, организационные и технические меры: ограничение
+            доступа, использование защищённого HTTPS-соединения, контроль учётных записей, обновление
+            программных компонентов, резервирование и реагирование на инциденты. Абсолютно исключить
+            все риски при передаче данных через Интернет невозможно, поэтому пользователь не должен
+            направлять через форму сведения, не необходимые для первого контакта.
+          </p>
+        </section>
+
+        <section id="rights">
+          <h2>9. Права пользователя</h2>
+          <p>Пользователь вправе:</p>
+          <ul>
+            <li>получить сведения об обработке своих персональных данных;</li>
+            <li>потребовать их уточнения, блокирования или удаления;</li>
+            <li>отозвать согласие на обработку данных и отдельное согласие на рассылку;</li>
+            <li>возразить против обработки, выполняемой на основании законных интересов;</li>
+            <li>обжаловать действия Оператора в Роскомнадзоре или в суде.</li>
+          </ul>
+          <p>
+            Запрос можно направить на <a href="mailto:valentin@vavgroup.pro">valentin@vavgroup.pro</a>.
+            В целях защиты данных Оператор вправе запросить сведения, позволяющие подтвердить личность
+            заявителя и его связь с запрашиваемыми данными. Ответ предоставляется в установленный
+            законом срок.
+          </p>
+        </section>
+
+        <section id="responsibility">
+          <h2>10. Ответственность пользователя</h2>
+          <p>
+            Пользователь отвечает за достоверность передаваемых сведений и за правомерность передачи
+            данных третьих лиц. Оператор вправе не рассматривать обращения, содержащие вредоносный код,
+            спам, противоправные материалы или явно недостоверные контактные данные.
+          </p>
+        </section>
+
+        <section id="contacts">
+          <h2>11. Контакты Оператора</h2>
+          <dl class="contact-details">
+            <div><dt>Оператор</dt><dd>Валентин Стратила, VAV Group</dd></div>
+            <div><dt>Email</dt><dd><a href="mailto:valentin@vavgroup.pro">valentin@vavgroup.pro</a></dd></div>
+            <div><dt>Телефон</dt><dd><a href="tel:+79224615517">+7 (922) 461-55-17</a></dd></div>
+            <div><dt>Сайт</dt><dd><a href="https://vavgroup.pro">vavgroup.pro</a></dd></div>
+          </dl>
+        </section>
+
+        <section id="changes">
+          <h2>12. Изменение Политики</h2>
+          <p>
+            Оператор может обновлять Политику при изменении процессов, сервисов или законодательства.
+            Новая редакция действует с момента публикации на этой странице, если в ней не указана иная
+            дата. Пользователям рекомендуется периодически проверять актуальную редакцию.
+          </p>
+        </section>
+
+        <p class="updated">Дата редакции: <time datetime="2026-08-22">{policyVersion}</time></p>
+      </article>
+    </div>
+  </section>
 </BaseLayout>
 
 <style>
-  .legal-page { padding-block: 2rem clamp(5rem,9vw,8rem); }.legal-grid { display: grid; grid-template-columns: .35fr 1fr; gap: clamp(3rem,8vw,8rem); }.legal-grid aside > p { margin-top: 4rem; color: var(--muted); font-size: .62rem; font-weight: 700; letter-spacing: .1em; }.legal-grid aside strong { display: block; margin-top: .6rem; font-size: .86rem; line-height: 1.5; }.legal-grid article { padding-top: 4rem; }.legal-grid h1 { margin-top: 1.2rem; font-size: var(--step-4); letter-spacing: -.045em; }.notice { margin: 2.5rem 0; padding: 1.4rem; border-left: 3px solid var(--accent); background: var(--surface-muted); }.notice b { font-size: .8rem; }.notice p { margin-top: .45rem; }.legal-grid h2 { margin-top: 2.4rem; font-size: 1.2rem; }.legal-grid article > p, .notice p { margin-top: .7rem; color: var(--muted-strong); line-height: 1.7; }.legal-grid .updated { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-family: var(--mono); font-size: .7rem; }
-  @media (max-width: 750px) { .legal-grid { grid-template-columns: 1fr; gap: 0; }.legal-grid aside > p { margin-top: 2rem; }.legal-grid article { padding-top: 3rem; } }
+  .legal-page { padding-block: 2rem clamp(5rem, 9vw, 8rem); }
+  .legal-grid { display: grid; grid-template-columns: minmax(14rem, .35fr) minmax(0, 1fr); gap: clamp(3rem, 8vw, 8rem); }
+  .legal-sidebar { align-self: start; }
+  .document-meta { margin-top: 4rem; }
+  .document-meta p { color: var(--muted); font-size: .62rem; font-weight: 700; letter-spacing: .1em; }
+  .document-meta strong, .document-meta span { display: block; }
+  .document-meta strong { margin-top: .6rem; font-size: .86rem; line-height: 1.5; }
+  .document-meta span { margin-top: .25rem; color: var(--muted); font-family: var(--mono); font-size: .66rem; }
+  .legal-nav { display: grid; gap: .75rem; margin-top: 2.25rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+  .legal-nav a { width: fit-content; color: var(--muted-strong); font-size: .72rem; line-height: 1.35; }
+  .legal-nav a:hover { color: var(--accent-hover); }
+  .legal-grid article { min-width: 0; padding-top: 4rem; }
+  .legal-grid h1 { max-width: 50rem; margin-top: 1.2rem; font-size: var(--step-4); letter-spacing: -.045em; text-wrap: balance; }
+  .legal-grid .lead { max-width: 47rem; margin-top: 1.5rem; color: var(--muted-strong); font-size: clamp(1rem, 1.8vw, 1.18rem); line-height: 1.65; }
+  .notice { margin: 2.5rem 0; padding: 1.4rem; border-left: 3px solid var(--accent); background: var(--surface-muted); }
+  .notice b { font-size: .8rem; }
+  .notice p { margin-top: .45rem; }
+  .legal-grid section { scroll-margin-top: 7rem; }
+  .legal-grid h2 { margin-top: 2.8rem; font-size: 1.25rem; letter-spacing: -.015em; }
+  .legal-grid h3 { margin-top: 1.45rem; font-size: .92rem; }
+  .legal-grid article section > p, .notice p { margin-top: .75rem; color: var(--muted-strong); line-height: 1.75; }
+  .legal-grid article a { color: var(--accent-hover); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .legal-grid ul { display: grid; gap: .55rem; margin: .9rem 0 0; padding-left: 1.2rem; color: var(--muted-strong); line-height: 1.65; }
+  .legal-grid li::marker { color: var(--accent); }
+  .purpose-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin-top: 1.2rem; border: 1px solid var(--line); background: var(--line); }
+  .purpose-list > div { padding: 1.2rem; background: var(--surface); }
+  .purpose-list strong { font-size: .8rem; }
+  .purpose-list p { margin-top: .4rem; color: var(--muted-strong); font-size: .78rem; line-height: 1.6; }
+  .contact-details { margin-top: 1.2rem; border-top: 1px solid var(--line); }
+  .contact-details div { display: grid; grid-template-columns: minmax(8rem, .32fr) 1fr; gap: 1.5rem; padding: .9rem 0; border-bottom: 1px solid var(--line); }
+  .contact-details dt { color: var(--muted); font-size: .72rem; }
+  .contact-details dd { margin: 0; color: var(--ink); font-size: .82rem; }
+  .legal-grid .updated { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-family: var(--mono); font-size: .7rem; }
+  @media (max-width: 750px) {
+    .legal-grid { grid-template-columns: 1fr; gap: 0; }
+    .document-meta { margin-top: 2rem; }
+    .legal-nav { display: none; }
+    .legal-grid article { padding-top: 3rem; }
+    .purpose-list { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .contact-details div { grid-template-columns: 1fr; gap: .3rem; }
+  }
 </style>
