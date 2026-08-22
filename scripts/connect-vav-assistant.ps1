@@ -204,7 +204,7 @@ try {
   $CommandsResult = Invoke-RestMethod -Method Post -Uri "https://api.telegram.org/bot$BotToken/setMyCommands" -ContentType 'application/json' -Body $CommandsPayload
   if (-not $CommandsResult.ok) { throw 'Telegram command setup failed.' }
 
-  $ConnectUrl = "https://t.me/$BotUsername?start=$ConnectCode"
+  $ConnectUrl = "https://t.me/${BotUsername}?start=$ConnectCode"
   Write-Host "`nTelegram will open now. Press START in the bot." -ForegroundColor Green
   Start-Process $ConnectUrl
 
