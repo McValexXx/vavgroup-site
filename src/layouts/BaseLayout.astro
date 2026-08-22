@@ -1,0 +1,73 @@
+---
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import '@/styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  noindex?: boolean;
+  image?: string;
+}
+
+const { title, description, noindex = false, image = '/og/vav-group.jpg' } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const socialImage = new URL(image, Astro.site);
+const yandexMetricaId = import.meta.env.PUBLIC_YANDEX_METRICA_ID;
+const googleAnalyticsId = import.meta.env.PUBLIC_GOOGLE_ANALYTICS_ID;
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'VAV Group',
+  url: 'https://vavgroup.pro',
+  email: 'valentin@vavgroup.pro',
+  telephone: '+79224615517',
+  slogan: 'Business. Sales. Automation. Growth.',
+  founder: {
+    '@type': 'Person',
+    name: 'Валентин Стратила',
+    jobTitle: 'Business Development · B2B Sales · Commercial Operations · Automation',
+  },
+};
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:site_name" content="VAV Group" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content="VAV Group — системы роста бизнеса" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
+    <meta name="twitter:image:alt" content="VAV Group — системы роста бизнеса" />
+    <meta name="theme-color" content="#0b1720" />
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(organizationSchema)}></script>
+    {googleAnalyticsId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}></script>}
+    {googleAnalyticsId && <script is:inline define:vars={{ googleAnalyticsId }}>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config',googleAnalyticsId,{anonymize_ip:true});</script>}
+    {yandexMetricaId && <script is:inline define:vars={{ yandexMetricaId }}>window.addEventListener('load',()=>{const s=document.createElement('script');s.src='https://mc.yandex.ru/metrika/tag.js';s.async=true;document.head.appendChild(s);s.onload=()=>window.ym?.(yandexMetricaId,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true});});</script>}
+    <title>{title}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">К содержанию</a>
+    <Header />
+    <main id="main"><slot /></main>
+    <Footer />
+  </body>
+</html>

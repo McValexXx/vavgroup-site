@@ -1,0 +1,12 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Страница не найдена — VAV Group" description="Запрошенная страница не найдена." noindex>
+  <section class="not-found"><div class="container not-found__grid"><div><p class="eyebrow"><span></span> Ошибка 404</p><h1>Эта страница не входит в текущую систему.</h1><p>Возможно, адрес изменился или был указан с ошибкой. Вернитесь на главную или откройте одно из направлений VAV Group.</p><div><a class="button" href="/">На главную</a><a class="button button--secondary" href="/contacts">Обсудить задачу</a></div></div><strong aria-hidden="true">404</strong></div></section>
+</BaseLayout>
+
+<style>
+  .not-found { min-height: 68vh; display: grid; align-items: center; overflow: hidden; padding-block: clamp(5rem,10vw,9rem); }.not-found__grid { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4rem; }.not-found h1 { max-width: 14ch; margin-top: 1.3rem; font-size: var(--step-5); line-height: 1.01; letter-spacing: -.055em; }.not-found p:not(.eyebrow) { max-width: 42rem; margin-top: 1.4rem; color: var(--muted-strong); line-height: 1.65; }.not-found div > div > div { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }.not-found strong { color: var(--surface-muted); font-size: clamp(10rem,25vw,25rem); line-height: .7; letter-spacing: -.1em; }
+  @media (max-width: 800px) { .not-found__grid { grid-template-columns: 1fr; }.not-found strong { grid-row: 1; font-size: 10rem; } }
+</style>

@@ -1,0 +1,28 @@
+---
+interface Props {
+  eyebrow: string;
+  title: string;
+  text?: string;
+  light?: boolean;
+}
+
+const { eyebrow, title, text, light = false } = Astro.props;
+---
+
+<header class:list={["section-header", { "section-header--light": light }]}>
+  <p class="eyebrow"><span></span>{eyebrow}</p>
+  <div class="section-header__grid">
+    <h2>{title}</h2>
+    {text && <p>{text}</p>}
+  </div>
+</header>
+
+<style>
+  .section-header { margin-bottom: clamp(2.5rem, 5vw, 4.5rem); }
+  .section-header__grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(16rem, .65fr); align-items: end; gap: 3rem; margin-top: 1.4rem; }
+  h2 { max-width: 19ch; font-size: var(--step-4); line-height: 1.06; letter-spacing: -.045em; }
+  .section-header__grid p { max-width: 34rem; color: var(--muted-strong); line-height: 1.68; }
+  .section-header--light { color: #fff; }
+  .section-header--light :global(.eyebrow), .section-header--light .section-header__grid p { color: #aeb9bf; }
+  @media (max-width: 740px) { .section-header__grid { grid-template-columns: 1fr; gap: 1rem; } }
+</style>

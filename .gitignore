@@ -1,0 +1,35 @@
+node_modules/
+.astro/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+.pnpm-store/
+coverage/
+tmp/
+
+# Local project context and confidential business material must never be
+# committed to a public website repository.
+sources/
+intake/
+docs/
+AGENTS.md
+
+# Private source documents and credentials are never website assets.
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.csv
+*.zip
+*.7z
+*.rar
+*.pem
+*.key
+*.p12
+*.pfx

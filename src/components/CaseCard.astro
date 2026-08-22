@@ -1,0 +1,43 @@
+---
+import type { PublicCase } from '@/data/cases';
+
+interface Props {
+  item: PublicCase;
+  compact?: boolean;
+}
+
+const { item, compact = false } = Astro.props;
+---
+
+<article class:list={['case-card', { 'case-card--compact': compact }]}>
+  <div class="case-card__meta">
+    <span>{item.sector}</span>
+    <span>{item.division}</span>
+  </div>
+  <p class="case-card__origin">{item.originLabel}</p>
+  <h3><a href={`/cases/${item.slug}`}>{item.title}</a></h3>
+  <p class="case-card__problem">{item.problem}</p>
+  <ul class="case-card__tags" aria-label="Методология">
+    {item.methodology.slice(0, compact ? 3 : 4).map((tag) => <li>{tag}</li>)}
+  </ul>
+  <a class="case-card__link" href={`/cases/${item.slug}`} aria-label={`Разобрать кейс: ${item.title}`}>
+    Разобрать кейс <span aria-hidden="true">↗</span>
+  </a>
+</article>
+
+<style>
+  .case-card { position: relative; min-height: 29rem; display: flex; flex-direction: column; padding: clamp(1.4rem, 2.5vw, 2rem); border: 1px solid var(--line); background: var(--surface); transition: translate .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  .case-card:hover { translate: 0 -.25rem; border-color: #aab8b1; box-shadow: var(--shadow-md); }
+  .case-card__meta { display: flex; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line-soft); color: var(--muted); font-family: var(--mono); font-size: .58rem; letter-spacing: .08em; text-transform: uppercase; }
+  .case-card__meta span:last-child { color: var(--accent); text-align: right; }
+  .case-card__origin { margin-top: 2.3rem; color: var(--accent); font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  h3 { margin-top: .85rem; font-size: clamp(1.25rem, 2vw, 1.65rem); line-height: 1.15; letter-spacing: -.035em; }
+  h3 a::after { content: ''; position: absolute; inset: 0; }
+  .case-card__problem { margin-top: 1rem; color: var(--muted-strong); font-size: .88rem; line-height: 1.65; }
+  .case-card__tags { display: flex; flex-wrap: wrap; gap: .45rem; margin: auto 0 0; padding: 2rem 0 0; list-style: none; }
+  .case-card__tags li { padding: .42rem .62rem; border: 1px solid var(--line); color: var(--muted-strong); background: var(--surface-muted); font-size: .67rem; }
+  .case-card__link { position: relative; z-index: 1; display: flex; justify-content: space-between; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--ink); font-size: .8rem; font-weight: 650; }
+  .case-card__link span { color: var(--accent); }
+  .case-card--compact { min-height: 25rem; }
+  @media (prefers-reduced-motion: reduce) { .case-card { transition: none; } .case-card:hover { translate: none; } }
+</style>

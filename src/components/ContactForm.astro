@@ -1,0 +1,116 @@
+---
+const rawEndpoint = import.meta.env.PUBLIC_FORMSPREE_ENDPOINT?.trim() || '';
+let endpointConfigured = false;
+
+try {
+  const endpoint = new URL(rawEndpoint);
+  endpointConfigured = endpoint.protocol === 'https:' && endpoint.hostname === 'formspree.io' && endpoint.pathname.startsWith('/f/');
+} catch {
+  endpointConfigured = false;
+}
+---
+
+<form class="contact-form" action={endpointConfigured ? rawEndpoint : undefined} method="POST" data-contact-form data-configured={String(endpointConfigured)} novalidate>
+  <div class="form-grid">
+    <div class="field"><label for="name">Имя <span>*</span></label><input id="name" name="name" type="text" autocomplete="name" required /></div>
+    <div class="field"><label for="company">Компания</label><input id="company" name="company" type="text" autocomplete="organization" /></div>
+    <div class="field"><label for="contact">Телефон / Telegram <span>*</span></label><input id="contact" name="contact" type="text" autocomplete="tel" required /></div>
+    <div class="field"><label for="email">Email <span>*</span></label><input id="email" name="email" type="email" autocomplete="email" required /></div>
+    <div class="field field--wide"><label for="service">Что хотите улучшить? <span>*</span></label><select id="service" name="service" required><option value="">Выберите направление</option><option>Продажи</option><option>Автоматизация</option><option>AI</option><option>Консалтинг</option><option>Networking</option><option>Academy</option><option>Production</option><option>Другое</option></select></div>
+    <div class="field field--wide"><label for="message">Сообщение</label><textarea id="message" name="message" rows="5" placeholder="Коротко опишите контекст, задачу или текущее ограничение"></textarea></div>
+  </div>
+  <div class="honeypot" aria-hidden="true"><label for="website">Не заполняйте это поле</label><input id="website" name="_gotcha" type="text" tabindex="-1" autocomplete="off" /></div>
+  {!endpointConfigured && (
+    <aside class="form-fallback" role="note" data-form-fallback>
+      <strong>Онлайн-форма пока не подключена.</strong>
+      <p>Свяжитесь напрямую: <a href="mailto:valentin@vavgroup.pro">valentin@vavgroup.pro</a> или <a href="tel:+79224615517">+7 (922) 461-55-17</a>.</p>
+    </aside>
+  )}
+  <div class="form-bottom">
+    <p>Отправляя форму, вы соглашаетесь с <a href="/privacy">политикой конфиденциальности</a>.</p>
+    <button class="button" type="submit" data-submit disabled={!endpointConfigured}>{endpointConfigured ? 'Отправить запрос' : 'Форма не подключена'} <span aria-hidden="true">↗</span></button>
+  </div>
+  <p class="form-status" data-form-status role="status" aria-live="polite" aria-atomic="true"></p>
+</form>
+
+<script>
+  const forms = document.querySelectorAll<HTMLFormElement>('[data-contact-form]');
+  forms.forEach((form) => {
+    const status = form.querySelector<HTMLElement>('[data-form-status]');
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+    const select = form.querySelector<HTMLSelectElement>('#service');
+    const requestedService = new URLSearchParams(window.location.search).get('service')?.toLowerCase() || '';
+    const serviceMap: Record<string, string> = { sale: 'Продажи', crm: 'Продажи', automation: 'Автоматизация', ai: 'AI', process: 'Консалтинг' };
+    const matchedKey = Object.keys(serviceMap).find((key) => requestedService.includes(key));
+    if (select && matchedKey) select.value = serviceMap[matchedKey];
+
+    const setStatus = (message: string, state: 'info' | 'success' | 'error') => {
+      if (!status) return;
+      status.textContent = message;
+      status.dataset.state = state;
+      status.setAttribute('role', state === 'error' ? 'alert' : 'status');
+      status.setAttribute('aria-live', state === 'error' ? 'assertive' : 'polite');
+    };
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (form.dataset.submitting === 'true') return;
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        setStatus('Проверьте обязательные поля.', 'error');
+        return;
+      }
+      if (form.dataset.configured !== 'true') {
+        setStatus('Онлайн-форма пока не подключена. Используйте email или телефон, указанные выше.', 'info');
+        return;
+      }
+      if (!submit || !status) return;
+      form.dataset.submitting = 'true';
+      form.setAttribute('aria-busy', 'true');
+      submit.disabled = true;
+      submit.textContent = 'Отправляем…';
+      status.textContent = '';
+      status.removeAttribute('data-state');
+      try {
+        const response = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error('Request failed');
+        form.reset();
+        setStatus('Спасибо. Запрос отправлен — мы свяжемся с вами после изучения задачи.', 'success');
+      } catch {
+        setStatus('Не удалось отправить форму. Напишите на valentin@vavgroup.pro или позвоните по номеру +7 (922) 461-55-17.', 'error');
+      } finally {
+        form.dataset.submitting = 'false';
+        form.removeAttribute('aria-busy');
+        submit.disabled = false;
+        submit.textContent = 'Отправить запрос ↗';
+      }
+    });
+  });
+</script>
+
+<style>
+  .contact-form { padding: clamp(1.5rem, 4vw, 3rem); border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-sm); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .field { display: grid; gap: .55rem; }
+  .field--wide { grid-column: 1 / -1; }
+  label { color: var(--muted-strong); font-size: .76rem; font-weight: 650; }
+  label span { color: var(--accent); }
+  input, select, textarea { width: 100%; border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--ink); background: #fff; }
+  input, select { height: 3.35rem; padding: 0 .9rem; }
+  textarea { min-height: 9rem; padding: .9rem; resize: vertical; line-height: 1.55; }
+  input:hover, select:hover, textarea:hover { border-color: #aeb9b3; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: 3px solid color-mix(in srgb, var(--accent) 12%, white); }
+  .honeypot { position: absolute; left: -10000px; }
+  .form-fallback { margin-top: 1.5rem; padding: 1.1rem 1.2rem; border-left: 3px solid var(--accent); color: var(--muted-strong); background: var(--surface-muted); }
+  .form-fallback strong { color: var(--ink); font-size: .82rem; }
+  .form-fallback p { margin-top: .4rem; font-size: .78rem; line-height: 1.6; }
+  .form-fallback a { color: var(--accent-hover); font-weight: 650; text-decoration: underline; text-underline-offset: 2px; }
+  .form-bottom { display: flex; justify-content: space-between; align-items: center; gap: 2rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+  .form-bottom p { max-width: 26rem; color: var(--muted); font-size: .72rem; line-height: 1.5; }
+  .form-bottom p a { text-decoration: underline; text-underline-offset: 2px; }
+  button:disabled { cursor: not-allowed; opacity: .62; }
+  form[aria-busy='true'] button:disabled { cursor: wait; }
+  .form-status { min-height: 1.4rem; margin-top: 1rem; font-size: .82rem; line-height: 1.5; }
+  .form-status[data-state='success'] { color: var(--success); }.form-status[data-state='error'] { color: var(--danger); }.form-status[data-state='info'] { color: var(--muted-strong); }
+  @media (max-width: 620px) { .form-grid { grid-template-columns: 1fr; } .field--wide { grid-column: auto; } .form-bottom { align-items: stretch; flex-direction: column; } .form-bottom .button { width: 100%; } }
+</style>

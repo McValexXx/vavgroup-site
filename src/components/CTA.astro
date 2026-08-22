@@ -1,0 +1,33 @@
+---
+interface Props {
+  title?: string;
+  text?: string;
+  label?: string;
+  href?: string;
+}
+const {
+  title = 'Есть задача, которую бизнес слишком долго решает вручную?',
+  text = 'Разберём контекст, определим следующий шаг и предложим подходящий формат работы.',
+  label = 'Обсудить решение',
+  href = '/contacts',
+} = Astro.props;
+---
+
+<section class="final-cta">
+  <div class="container final-cta__inner">
+    <div><p class="eyebrow"><span></span> Следующий шаг</p><h2>{title}</h2><p>{text}</p></div>
+    <a class="button button--light" href={href}>{label} <span aria-hidden="true">↗</span></a>
+  </div>
+</section>
+
+<style>
+  .final-cta { position: relative; overflow: hidden; padding-block: clamp(4.5rem, 9vw, 8rem); color: #fff; background: var(--surface-dark); }
+  .final-cta::after { content: ''; position: absolute; right: -10rem; top: 50%; width: 32rem; aspect-ratio: 1; translate: 0 -50%; border: 1px solid #2a3d46; border-radius: 50%; box-shadow: 0 0 0 5rem rgba(255,255,255,.018), 0 0 0 10rem rgba(255,255,255,.012); }
+  .final-cta__inner { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 3rem; }
+  .final-cta :global(.eyebrow) { color: #aeb9bf; }
+  h2 { max-width: 19ch; margin-top: 1.3rem; font-size: var(--step-4); line-height: 1.04; letter-spacing: -.045em; }
+  .final-cta__inner > div > p:last-child { max-width: 40rem; margin-top: 1.2rem; color: #aeb9bf; line-height: 1.65; }
+  .button--light { color: var(--ink); border-color: #fff; background: #fff; }
+  .button--light:hover { color: #fff; }
+  @media (max-width: 720px) { .final-cta__inner { grid-template-columns: 1fr; align-items: start; } .button { justify-self: start; } }
+</style>

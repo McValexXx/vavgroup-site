@@ -1,0 +1,33 @@
+---
+interface Props {
+  steps: string[];
+  direction?: 'horizontal' | 'vertical';
+}
+
+const { steps, direction = 'horizontal' } = Astro.props;
+---
+
+<div class:list={['case-diagram', `case-diagram--${direction}`]} aria-label={`Схема: ${steps.join(', ')}`}>
+  {steps.map((step, index) => (
+    <>
+      <div class="case-diagram__step"><span>{String(index + 1).padStart(2, '0')}</span><strong>{step}</strong></div>
+      {index < steps.length - 1 && <span class="case-diagram__arrow" aria-hidden="true">→</span>}
+    </>
+  ))}
+</div>
+
+<style>
+  .case-diagram { padding: clamp(1.2rem, 3vw, 2rem); border: 1px solid #2b3c45; background: #0b1820; }
+  .case-diagram--horizontal { display: flex; align-items: center; gap: .55rem; }
+  .case-diagram__step { min-width: 0; flex: 1 1 0; padding: 1.1rem .8rem; border: 1px solid #30434d; background: #101f28; text-align: center; }
+  .case-diagram__step span { display: block; margin-bottom: .65rem; color: #6d8a84; font-family: var(--mono); font-size: .56rem; }
+  .case-diagram__step strong { color: #eef3f1; font-size: .72rem; letter-spacing: .045em; text-transform: uppercase; }
+  .case-diagram__arrow { flex: 0 0 auto; color: #69a99d; font-family: var(--mono); }
+  .case-diagram--vertical { max-width: 31rem; display: grid; grid-template-columns: 1fr; gap: .55rem; margin-inline: auto; }
+  .case-diagram--vertical .case-diagram__arrow { rotate: 90deg; justify-self: center; }
+  @media (max-width: 850px) {
+    .case-diagram--horizontal { flex-direction: column; }
+    .case-diagram--horizontal .case-diagram__step { width: 100%; }
+    .case-diagram--horizontal .case-diagram__arrow { rotate: 90deg; }
+  }
+</style>

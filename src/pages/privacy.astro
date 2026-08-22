@@ -1,0 +1,13 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+---
+
+<BaseLayout title="Политика конфиденциальности — VAV Group" description="Информация о конфиденциальности и обработке обращений на сайте VAV Group." noindex>
+  <section class="legal-page"><div class="container legal-grid"><aside><Breadcrumbs items={[{ label: 'VAV Group', href: '/' }, { label: 'Конфиденциальность' }]} /><p>СТАТУС ДОКУМЕНТА</p><strong>Черновик для юридического согласования</strong></aside><article><p class="eyebrow"><span></span> Документ</p><h1>Политика конфиденциальности</h1><div class="notice"><b>Важно</b><p>Это структурный placeholder, а не утверждённая юридическая редакция. Перед публикацией форму, перечень данных, сроки хранения, обработчиков и применимое законодательство должен проверить профильный юрист.</p></div><h2>1. Общие положения</h2><p>[LEGAL_TEXT_TO_BE_ADDED]</p><h2>2. Какие данные могут обрабатываться</h2><p>Данные, добровольно указанные в форме: имя, компания, контакт в телефоне или Telegram, email, выбранное направление и текст сообщения.</p><h2>3. Цели обработки</h2><p>Ответ на обращение, подготовка к обсуждению задачи и деловая коммуникация по инициативе пользователя.</p><h2>4. Обработчики и форма</h2><p>[FORM_PROVIDER_AND_DATA_PROCESSING_TERMS_TO_BE_ADDED]</p><h2>5. Аналитика и cookies</h2><p>[ANALYTICS_AND_COOKIE_TERMS_TO_BE_ADDED]</p><h2>6. Сроки, права и контакты</h2><p>[LEGAL_TEXT_TO_BE_ADDED]</p><p class="updated">Дата редакции: [DATE_TO_BE_ADDED]</p></article></div></section>
+</BaseLayout>
+
+<style>
+  .legal-page { padding-block: 2rem clamp(5rem,9vw,8rem); }.legal-grid { display: grid; grid-template-columns: .35fr 1fr; gap: clamp(3rem,8vw,8rem); }.legal-grid aside > p { margin-top: 4rem; color: var(--muted); font-size: .62rem; font-weight: 700; letter-spacing: .1em; }.legal-grid aside strong { display: block; margin-top: .6rem; font-size: .86rem; line-height: 1.5; }.legal-grid article { padding-top: 4rem; }.legal-grid h1 { margin-top: 1.2rem; font-size: var(--step-4); letter-spacing: -.045em; }.notice { margin: 2.5rem 0; padding: 1.4rem; border-left: 3px solid var(--accent); background: var(--surface-muted); }.notice b { font-size: .8rem; }.notice p { margin-top: .45rem; }.legal-grid h2 { margin-top: 2.4rem; font-size: 1.2rem; }.legal-grid article > p, .notice p { margin-top: .7rem; color: var(--muted-strong); line-height: 1.7; }.legal-grid .updated { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-family: var(--mono); font-size: .7rem; }
+  @media (max-width: 750px) { .legal-grid { grid-template-columns: 1fr; gap: 0; }.legal-grid aside > p { margin-top: 2rem; }.legal-grid article { padding-top: 3rem; } }
+</style>

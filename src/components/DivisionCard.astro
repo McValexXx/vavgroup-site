@@ -1,0 +1,30 @@
+---
+import type { Division } from '@/data/divisions';
+interface Props { division: Division }
+const { division } = Astro.props;
+---
+
+<article class="division-card">
+  <div class="division-card__top"><span>{division.number}</span><i></i></div>
+  <p class="division-card__label">{division.eyebrow}</p>
+  <h3>{division.name}</h3>
+  <div class="division-card__body">
+    <div><b>Задача</b><p>{division.cardProblem}</p></div>
+    <div><b>Результат</b><p>{division.cardOutcome}</p></div>
+  </div>
+  <a href={division.href} aria-label={`Подробнее: ${division.name}`}>Подробнее <span aria-hidden="true">↗</span></a>
+</article>
+
+<style>
+  .division-card { position: relative; display: flex; flex-direction: column; min-height: 27rem; padding: clamp(1.4rem, 2.5vw, 2rem); border: 1px solid var(--line); background: var(--surface); transition: border-color .2s ease, translate .2s ease, box-shadow .2s ease; }
+  .division-card:hover { z-index: 1; border-color: #aeb9b3; translate: 0 -3px; box-shadow: var(--shadow-sm); }
+  .division-card__top { display: flex; align-items: center; gap: .75rem; color: var(--accent); font-family: var(--mono); font-size: .7rem; }
+  .division-card__top i { flex: 1; height: 1px; background: var(--line); }
+  .division-card__label { margin-top: 2.4rem; color: var(--muted); font-size: .65rem; font-weight: 650; letter-spacing: .11em; text-transform: uppercase; }
+  h3 { margin-top: .65rem; font-size: var(--step-2); letter-spacing: -.03em; }
+  .division-card__body { display: grid; gap: 1.15rem; margin-top: 2rem; }
+  .division-card__body b { color: var(--muted); font-size: .66rem; letter-spacing: .09em; text-transform: uppercase; }
+  .division-card__body p { margin-top: .35rem; color: var(--muted-strong); font-size: .9rem; line-height: 1.55; }
+  a { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--line); font-size: .82rem; font-weight: 680; }
+  a span { color: var(--accent); }
+</style>

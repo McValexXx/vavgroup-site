@@ -1,0 +1,38 @@
+---
+interface Props {
+  title: string;
+  text: string;
+  items: string[];
+  compact?: boolean;
+}
+const { title, text, items, compact = false } = Astro.props;
+---
+
+<article class:list={["audit-card", { "audit-card--compact": compact }]}>
+  <div class="audit-card__content">
+    <p class="eyebrow"><span></span> Стартовый формат</p>
+    <h2>{title}</h2>
+    <p>{text}</p>
+    <a class="button" href={`/contacts?service=${encodeURIComponent(title)}`}>Запросить диагностику <span aria-hidden="true">↗</span></a>
+  </div>
+  <div class="audit-card__scope">
+    <p>В фокусе</p>
+    <ul>{items.map((item) => <li><span aria-hidden="true">✓</span>{item}</li>)}</ul>
+  </div>
+</article>
+
+<style>
+  .audit-card { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(18rem, .8fr); border: 1px solid #263943; color: #fff; background: var(--surface-dark); box-shadow: var(--shadow-lg); }
+  .audit-card__content, .audit-card__scope { padding: clamp(2rem, 5vw, 4rem); }
+  .audit-card__content { border-right: 1px solid #263943; }
+  .audit-card :global(.eyebrow) { color: #aab5bb; }
+  h2 { max-width: 17ch; margin-top: 1.4rem; font-size: var(--step-3); line-height: 1.08; letter-spacing: -.04em; }
+  .audit-card__content > p:not(.eyebrow) { max-width: 38rem; margin-top: 1.2rem; color: #b2bdc3; line-height: 1.65; }
+  .button { margin-top: 2rem; color: var(--ink); border-color: #fff; background: #fff; }
+  .button:hover { color: #fff; }
+  .audit-card__scope > p { color: #87969e; font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  ul { display: grid; gap: 1rem; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+  li { display: flex; gap: .75rem; padding-bottom: 1rem; border-bottom: 1px solid #263943; color: #d5dcdf; font-size: .88rem; }
+  li span { color: #70b7aa; }
+  @media (max-width: 760px) { .audit-card { grid-template-columns: 1fr; } .audit-card__content { border-right: 0; border-bottom: 1px solid #263943; } }
+</style>

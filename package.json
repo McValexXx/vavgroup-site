@@ -1,0 +1,25 @@
+{
+  "name": "vav-group-website",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && node scripts/lint-content.mjs && astro build && node scripts/validate-build.mjs",
+    "preview": "astro preview",
+    "check": "astro check",
+    "lint": "node scripts/lint-content.mjs",
+    "validate": "node scripts/validate-build.mjs"
+  },
+  "dependencies": {
+    "astro": "^7.2.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@11.19.0"
+}

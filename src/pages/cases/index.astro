@@ -1,0 +1,52 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import CaseCard from '@/components/CaseCard.astro';
+import CTA from '@/components/CTA.astro';
+import { cases } from '@/data/cases';
+---
+
+<BaseLayout
+  title="Кейсы VAV Group — продажи, автоматизация и бизнес-системы"
+  description="Анонимизированные практические кейсы VAV Group и опыт основателя: автоматизация процессов, коммерческое управление и сложные B2B-продажи."
+>
+  <section class="cases-hero">
+    <div class="container">
+      <Breadcrumbs items={[{ label: 'Главная', href: '/' }, { label: 'Кейсы' }]} />
+      <p class="eyebrow"><span></span> Кейсы</p>
+      <div class="cases-hero__grid">
+        <h1>Практика,&nbsp;<br />а не теория</h1>
+        <div>
+          <p>Разбираем реальные бизнес-задачи: продажи, процессы, автоматизацию и управление. Конфиденциальные данные и названия компаний не публикуются без согласования.</p>
+          <p class="trust-note">Публикуем только те результаты и факты, которые можем корректно подтвердить. Конфиденциальные проекты анонимизируются.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section cases-list" aria-labelledby="cases-list-title">
+    <div class="container">
+      <div class="cases-list__head">
+        <p class="eyebrow"><span></span> Практический опыт</p>
+        <h2 id="cases-list-title">Три задачи. Три управленческих контура.</h2>
+      </div>
+      <div class="cases-grid">{cases.map((item) => <CaseCard item={item} />)}</div>
+    </div>
+  </section>
+
+  <CTA title="Есть похожая задача?" text="Обсудим контекст и определим, какой анализ нужен до внедрения изменений." label="Обсудить задачу" />
+</BaseLayout>
+
+<style>
+  .cases-hero { padding-block: 2rem clamp(4.5rem, 9vw, 8rem); border-bottom: 1px solid var(--line); background: var(--surface-muted); }
+  .cases-hero :global(.breadcrumbs) { margin-bottom: clamp(3rem, 7vw, 6.5rem); }
+  .cases-hero__grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(18rem, .65fr); align-items: end; gap: clamp(2rem, 7vw, 7rem); margin-top: 1.5rem; }
+  h1 { max-width: 10ch; font-size: clamp(3.4rem, 8vw, 7.5rem); line-height: .92; letter-spacing: -.065em; }
+  .cases-hero__grid > div > p { color: var(--muted-strong); font-size: clamp(1rem, 1.6vw, 1.18rem); line-height: 1.7; }
+  .trust-note { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line); font-size: .8rem !important; }
+  .cases-list__head { display: grid; grid-template-columns: .65fr 1.35fr; gap: 2rem; align-items: start; margin-bottom: clamp(2.5rem, 5vw, 4.5rem); }
+  .cases-list__head h2 { max-width: 18ch; font-size: var(--step-4); line-height: 1.05; letter-spacing: -.045em; }
+  .cases-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+  @media (max-width: 960px) { .cases-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 740px) { .cases-hero__grid, .cases-list__head { grid-template-columns: 1fr; } .cases-grid { grid-template-columns: 1fr; } }
+</style>

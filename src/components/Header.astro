@@ -1,0 +1,107 @@
+---
+import Logo from './Logo.astro';
+import { divisions } from '@/data/divisions';
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => href === '/' ? path === '/' : path.startsWith(href);
+---
+
+<header class="site-header" data-header>
+  <div class="container header-inner">
+    <a class="brand-link" href="/" aria-label="VAV Group — главная"><Logo /></a>
+    <nav class="desktop-nav" aria-label="Основная навигация">
+      <details class="directions-menu">
+        <summary class={divisions.some(({ href }) => isActive(href)) ? 'active' : ''}>Направления <span aria-hidden="true">⌄</span></summary>
+        <div class="directions-menu__panel">
+          {divisions.map((division) => <a class={isActive(division.href) ? 'active' : ''} href={division.href}><span>{division.number}</span>{division.name}</a>)}
+        </div>
+      </details>
+      <a class={isActive('/cases') ? 'active' : ''} href="/cases">Кейсы</a>
+      <a class={isActive('/about') ? 'active' : ''} href="/about">О группе</a>
+      <a class={isActive('/contacts') ? 'active' : ''} href="/contacts">Контакты</a>
+    </nav>
+    <a class="button button--small header-cta" href="/contacts">Обсудить задачу</a>
+    <div class="mobile-menu" data-mobile-menu>
+      <button type="button" aria-expanded="false" aria-controls="mobile-menu-panel" aria-label="Открыть меню" data-mobile-menu-toggle><span></span><span></span></button>
+      <div class="mobile-menu__panel" id="mobile-menu-panel" hidden>
+        <nav aria-label="Мобильная навигация">
+          <p>Направления</p>
+          {divisions.map((division) => <a href={division.href}><span>{division.number}</span>{division.name}</a>)}
+          <div class="mobile-menu__meta"><a href="/cases">Кейсы</a><a href="/about">О VAV Group</a><a href="/contacts">Контакты</a></div>
+          <a class="button" href="/contacts">Обсудить задачу <span aria-hidden="true">↗</span></a>
+        </nav>
+      </div>
+    </div>
+    <nav class="mobile-nojs" aria-label="Навигация без JavaScript"><a href="/cases">Кейсы</a><a href="/contacts">Контакты</a></nav>
+    <noscript><style>@media (max-width:860px){.mobile-menu{display:none!important}.mobile-nojs{display:flex!important}}</style></noscript>
+  </div>
+</header>
+
+<script is:inline>
+  document.querySelectorAll('[data-mobile-menu]').forEach((menu) => {
+    const toggle = menu.querySelector('[data-mobile-menu-toggle]');
+    const panel = menu.querySelector('.mobile-menu__panel');
+    if (!(toggle instanceof HTMLButtonElement) || !(panel instanceof HTMLElement)) return;
+
+    const setOpen = (open) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+      panel.hidden = !open;
+      menu.toggleAttribute('data-open', open);
+    };
+
+    toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+    toggle.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+    panel.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setOpen(false)));
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || toggle.getAttribute('aria-expanded') !== 'true') return;
+      setOpen(false);
+      toggle.focus();
+    });
+  });
+</script>
+
+<style>
+  .site-header { position: sticky; z-index: 50; top: 0; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(14px); }
+  .header-inner { position: relative; min-height: 4.85rem; display: flex; align-items: center; gap: 2rem; }
+  .brand-link { display: inline-flex; margin-right: auto; }
+  .desktop-nav { display: flex; align-items: center; gap: 1.8rem; }
+  .desktop-nav > a, summary { position: relative; color: var(--muted-strong); font-size: .86rem; font-weight: 590; cursor: pointer; }
+  .desktop-nav > a::after, summary::after { content: ''; position: absolute; right: 0; bottom: -.65rem; left: 0; height: 1px; background: var(--accent); transform: scaleX(0); transition: transform .2s ease; }
+  .desktop-nav > a:hover, .desktop-nav > a.active, summary:hover, summary.active { color: var(--ink); }
+  .desktop-nav > a.active::after, summary.active::after { transform: scaleX(1); }
+  summary { display: flex; align-items: center; gap: .4rem; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  .directions-menu[open] summary span { rotate: 180deg; }
+  .directions-menu__panel { position: absolute; top: calc(100% + 1px); left: 50%; width: min(46rem, calc(100vw - 2rem)); display: grid; grid-template-columns: 1fr 1fr; gap: 1px; padding: .65rem; translate: -50% 0; border: 1px solid var(--line); background: var(--surface-muted); box-shadow: var(--shadow-lg); }
+  .directions-menu__panel a { display: flex; align-items: center; gap: .8rem; padding: .85rem 1rem; background: var(--surface); font-size: .82rem; }
+  .directions-menu__panel a:hover, .directions-menu__panel a.active { color: var(--accent); background: #f7f9f7; }
+  .directions-menu__panel a span { color: var(--muted); font-family: var(--mono); font-size: .62rem; }
+  .mobile-menu { display: none; }
+  .mobile-nojs { display: none; align-items: center; gap: 1rem; }
+  .mobile-nojs a { color: var(--muted-strong); font-size: .78rem; font-weight: 650; }
+  @media (max-width: 860px) {
+    .desktop-nav { display: none; }
+    .mobile-menu { display: block; }
+    .mobile-menu > button { position: relative; width: 2.75rem; height: 2.75rem; display: block; padding: 0; border: 1px solid var(--line); border-radius: .45rem; background: var(--surface); cursor: pointer; }
+    .mobile-menu > button span { position: absolute; top: 50%; left: 50%; width: 1.1rem; height: 1px; background: var(--ink); transition: transform .2s ease; }
+    .mobile-menu > button span:first-child { transform: translate(-50%, -.23rem); }
+    .mobile-menu > button span:last-child { transform: translate(-50%, .23rem); }
+    .mobile-menu[data-open] > button span:first-child { transform: translate(-50%, 0) rotate(45deg); }
+    .mobile-menu[data-open] > button span:last-child { transform: translate(-50%, 0) rotate(-45deg); }
+    .mobile-menu__panel[hidden] { display: none; }
+    .mobile-menu__panel { position: fixed; inset: 4.86rem 0 auto; max-height: calc(100vh - 4.86rem); overflow-y: auto; padding: 1.25rem; border-bottom: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-lg); }
+    .mobile-menu__panel nav { width: min(100%, 42rem); margin-inline: auto; }
+    .mobile-menu__panel nav > p { margin-bottom: .75rem; color: var(--muted); font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .mobile-menu__panel nav > a:not(.button) { display: flex; gap: .8rem; padding: .9rem 0; border-bottom: 1px solid var(--line); font-weight: 620; }
+    .mobile-menu__panel nav > a span { color: var(--accent); font-family: var(--mono); font-size: .65rem; }
+    .mobile-menu__meta { display: flex; flex-wrap: wrap; gap: .8rem 1.5rem; margin-block: 1.5rem; }
+    .mobile-menu__meta a { color: var(--muted-strong); font-size: .86rem; font-weight: 600; }
+    .mobile-menu__panel .button { width: 100%; }
+  }
+  @media (max-width: 510px) { .header-cta { display: none; } .header-inner { min-height: 4.35rem; } .mobile-menu__panel { inset-block-start: 4.36rem; max-height: calc(100vh - 4.36rem); } }
+</style>

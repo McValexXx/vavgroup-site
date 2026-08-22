@@ -1,0 +1,27 @@
+---
+interface Step { title: string; text: string }
+interface Props { steps: Step[] }
+const { steps } = Astro.props;
+---
+
+<ol class="process-steps">
+  {steps.map((step, index) => (
+    <li>
+      <div class="process-steps__head"><span>{String(index + 1).padStart(2, '0')}</span><i></i></div>
+      <h3>{step.title}</h3>
+      <p>{step.text}</p>
+    </li>
+  ))}
+</ol>
+
+<style>
+  .process-steps { display: grid; grid-template-columns: repeat(var(--steps, 5), minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+  li { min-height: 14rem; padding: 1.35rem; border: 1px solid var(--line); border-right: 0; background: var(--surface); }
+  li:last-child { border-right: 1px solid var(--line); }
+  .process-steps__head { display: flex; align-items: center; gap: .65rem; color: var(--accent); font-family: var(--mono); font-size: .65rem; }
+  .process-steps__head i { flex: 1; height: 1px; background: var(--line); }
+  h3 { margin-top: 3.25rem; font-size: 1.05rem; }
+  p { margin-top: .7rem; color: var(--muted); font-size: .84rem; line-height: 1.55; }
+  @media (max-width: 900px) { .process-steps { grid-template-columns: repeat(2, 1fr); } li { border-right: 1px solid var(--line); margin: 0 -1px -1px 0; } }
+  @media (max-width: 520px) { .process-steps { grid-template-columns: 1fr; } li { min-height: auto; padding: 1.25rem; } h3 { margin-top: 2rem; } }
+</style>

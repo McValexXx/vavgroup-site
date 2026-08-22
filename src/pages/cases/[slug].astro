@@ -1,0 +1,136 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import CaseDiagram from '@/components/CaseDiagram.astro';
+import CTA from '@/components/CTA.astro';
+import { cases, type PublicCase } from '@/data/cases';
+
+export function getStaticPaths() {
+  return cases.map((item) => ({ params: { slug: item.slug }, props: { item } }));
+}
+
+interface Props {
+  item: PublicCase;
+}
+
+const { item } = Astro.props;
+---
+
+<BaseLayout title={item.seo.title} description={item.seo.description}>
+  <article class="case-page">
+    <header class="case-hero">
+      <div class="container">
+        <Breadcrumbs items={[{ label: 'Главная', href: '/' }, { label: 'Кейсы', href: '/cases' }, { label: item.title }]} />
+        <div class="case-hero__meta"><span>{item.originLabel}</span><span>{item.sector}</span><span>{item.division}</span></div>
+        <div class="case-hero__grid">
+          <h1>{item.title}</h1>
+          <div>
+            <p>{item.shortSummary}</p>
+            <a class="case-hero__link" href="#case-content">Разобрать подход <span aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div id="case-content">
+      <section class="case-section">
+        <div class="container case-section__grid">
+          <header><span>01</span><h2>Контекст</h2></header>
+          <div class="case-section__content"><p class="case-lead">{item.context}</p><aside>{item.confidentialityNote}</aside></div>
+        </div>
+      </section>
+
+      <section class="case-section case-section--muted">
+        <div class="container case-section__grid">
+          <header><span>02</span><h2>Задача</h2></header>
+          <div class="case-section__content"><p class="case-lead">{item.challenge}</p><div class="problem-panel"><span>Ограничение</span><p>{item.problem}</p></div></div>
+        </div>
+      </section>
+
+      <section class="case-section">
+        <div class="container case-section__grid">
+          <header><span>03</span><h2>Роль</h2></header>
+          <div class="case-section__content"><p class="case-lead">{item.role}</p><p class="origin-note">{item.originLabel}. Формулировка не представляет работодателя или другую компанию как клиента VAV Group.</p></div>
+        </div>
+      </section>
+
+      <section class="case-section case-section--dark">
+        <div class="container case-section__grid">
+          <header><span>04</span><h2>Что было сделано</h2></header>
+          <div class="case-section__content"><ol class="actions-list">{item.actions.map((action, index) => <li><span>{String(index + 1).padStart(2, '0')}</span><p>{action}</p></li>)}</ol></div>
+        </div>
+      </section>
+
+      <section class="case-section architecture-section" id="architecture">
+        <div class="container">
+          <div class="case-section__grid">
+            <header><span>05</span><h2>Архитектура решения</h2></header>
+            <div class="case-section__content"><p class="case-lead">{item.solution}</p><ul class="tag-list" aria-label="Инструменты">{item.tools.map((tool) => <li>{tool}</li>)}</ul></div>
+          </div>
+          <CaseDiagram steps={item.visualSteps} direction={item.visualDirection} />
+        </div>
+      </section>
+
+      <section class="case-section case-section--muted" id="result">
+        <div class="container case-section__grid">
+          <header><span>06</span><h2>Результат</h2></header>
+          <div class="case-section__content">
+            <p class="case-lead">{item.outcome}</p>
+            {item.publicationNote && <p class="publication-note"><strong>Важно:</strong> {item.publicationNote}</p>}
+          </div>
+        </div>
+      </section>
+
+      <section class="case-section transferable-section">
+        <div class="container case-section__grid">
+          <header><span>07</span><h2>Что можно применить в другом бизнесе</h2></header>
+          <div class="case-section__content"><ul class="transferable-list">{item.transferable.map((point) => <li>{point}</li>)}</ul><div class="methodology"><span>Методология</span><ul>{item.methodology.map((tag) => <li>{tag}</li>)}</ul></div></div>
+        </div>
+      </section>
+    </div>
+  </article>
+
+  <CTA title="Есть похожая задача?" text={item.cta.supportingText} label={item.cta.label} href={item.cta.href} />
+</BaseLayout>
+
+<style>
+  .case-hero { padding-block: 2rem clamp(5rem, 10vw, 9rem); color: #fff; background: var(--surface-dark); }
+  .case-hero :global(.breadcrumbs), .case-hero :global(.breadcrumbs a) { color: #819098; }
+  .case-hero__meta { display: flex; flex-wrap: wrap; gap: .7rem 1.3rem; margin-top: clamp(3rem, 7vw, 6rem); color: #88aaa3; font-family: var(--mono); font-size: .6rem; letter-spacing: .09em; text-transform: uppercase; }
+  .case-hero__meta span + span { padding-left: 1.3rem; border-left: 1px solid #31424a; }
+  .case-hero__grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(18rem, .55fr); align-items: end; gap: clamp(2.5rem, 8vw, 8rem); margin-top: 1.5rem; }
+  h1 { max-width: 17ch; font-size: clamp(2.8rem, 5.6vw, 5.7rem); line-height: .98; letter-spacing: -.058em; }
+  .case-hero__grid > div > p { color: #b3bec3; font-size: clamp(1rem, 1.5vw, 1.15rem); line-height: 1.7; }
+  .case-hero__link { display: flex; justify-content: space-between; margin-top: 2rem; padding-block: 1rem; border-top: 1px solid #31424a; border-bottom: 1px solid #31424a; color: #edf3f1; font-size: .8rem; font-weight: 650; }
+  .case-hero__link span { color: #70b7aa; }
+  .case-section { padding-block: clamp(4.5rem, 8vw, 7.5rem); border-bottom: 1px solid var(--line); }
+  .case-section--muted { background: var(--surface-muted); }
+  .case-section__grid { display: grid; grid-template-columns: minmax(12rem, .55fr) minmax(0, 1.45fr); gap: clamp(2.5rem, 8vw, 8rem); }
+  .case-section header > span { color: var(--accent); font-family: var(--mono); font-size: .62rem; }
+  .case-section header h2 { max-width: 12ch; margin-top: .85rem; font-size: clamp(1.45rem, 2.6vw, 2.35rem); line-height: 1.08; letter-spacing: -.04em; }
+  .case-lead { max-width: 51rem; font-size: clamp(1.1rem, 2vw, 1.55rem); line-height: 1.55; letter-spacing: -.018em; }
+  .case-section__content aside, .origin-note { max-width: 49rem; margin-top: 2rem; padding: 1.1rem 1.25rem; border-left: 2px solid var(--accent); color: var(--muted-strong); background: var(--surface-muted); font-size: .78rem; line-height: 1.6; }
+  .problem-panel { margin-top: 2.3rem; padding: 1.5rem; border: 1px solid var(--line); background: var(--surface); }
+  .problem-panel span, .methodology > span { color: var(--accent); font-family: var(--mono); font-size: .59rem; letter-spacing: .09em; text-transform: uppercase; }
+  .problem-panel p { max-width: 48rem; margin-top: .8rem; color: var(--muted-strong); line-height: 1.65; }
+  .case-section--dark { color: #fff; border-color: #293b44; background: var(--surface-dark); }
+  .case-section--dark header h2 { color: #fff; }
+  .actions-list { margin: 0; padding: 0; border-top: 1px solid #2d4049; list-style: none; }
+  .actions-list li { display: grid; grid-template-columns: 2.5rem 1fr; gap: 1rem; padding: 1.25rem 0; border-bottom: 1px solid #2d4049; }
+  .actions-list span { color: #70b7aa; font-family: var(--mono); font-size: .6rem; }
+  .actions-list p { color: #c0c9cd; line-height: 1.6; }
+  .architecture-section .case-diagram { margin-top: clamp(3rem, 6vw, 5rem); }
+  .tag-list, .methodology ul { display: flex; flex-wrap: wrap; gap: .5rem; margin: 2rem 0 0; padding: 0; list-style: none; }
+  .tag-list li, .methodology li { padding: .48rem .68rem; border: 1px solid var(--line); color: var(--muted-strong); background: var(--surface-muted); font-size: .7rem; }
+  .publication-note { max-width: 49rem; margin-top: 2rem; padding: 1.25rem; border: 1px solid #a9b9b2; background: var(--surface); color: var(--muted-strong); font-size: .82rem; line-height: 1.6; }
+  .publication-note strong { color: var(--ink); }
+  .transferable-list { display: grid; gap: 0; margin: 0; padding: 0; border-top: 1px solid var(--line); list-style: none; counter-reset: transfer; }
+  .transferable-list li { position: relative; padding: 1.3rem 0 1.3rem 3.2rem; border-bottom: 1px solid var(--line); color: var(--muted-strong); line-height: 1.62; counter-increment: transfer; }
+  .transferable-list li::before { content: counter(transfer, decimal-leading-zero); position: absolute; left: 0; color: var(--accent); font-family: var(--mono); font-size: .61rem; }
+  .methodology { margin-top: 2.5rem; }
+  @media (max-width: 780px) {
+    .case-hero__grid, .case-section__grid { grid-template-columns: 1fr; }
+    .case-hero__meta span + span { padding-left: 0; border-left: 0; }
+    .case-section__grid { gap: 1.5rem; }
+  }
+</style>

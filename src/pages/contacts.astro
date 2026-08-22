@@ -1,0 +1,19 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Breadcrumbs from '@/components/Breadcrumbs.astro';
+import ContactForm from '@/components/ContactForm.astro';
+---
+
+<BaseLayout title="Контакты VAV Group — обсудить задачу" description="Расскажите, что хотите улучшить в продажах, процессах, автоматизации, AI или управлении. VAV Group предложит следующий шаг.">
+  <section class="contact-page">
+    <div class="container"><Breadcrumbs items={[{ label: 'VAV Group', href: '/' }, { label: 'Контакты' }]} /><div class="contact-heading"><div><p class="eyebrow"><span></span> Контакты</p><h1>Начнём с задачи, а не с готового продукта.</h1></div><p>Опишите контекст и то, что хотите улучшить. Мы изучим запрос и предложим разумный следующий шаг: короткий разбор, диагностику или профильный проект.</p></div></div>
+  </section>
+  <section class="contact-body"><div class="container contact-grid"><aside><div class="contact-block"><p>Контакт</p><strong>Валентин Стратила</strong></div><div class="contact-block"><p>Email</p><a href="mailto:valentin@vavgroup.pro">valentin@vavgroup.pro</a></div><div class="contact-block"><p>Телефон</p><a href="tel:+79224615517">+7 (922) 461-55-17</a></div><div class="response-note"><span>01</span><p>Укажите цель, текущую ситуацию и желаемый срок — это поможет подготовиться к первому разговору.</p></div></aside><ContactForm /></div></section>
+</BaseLayout>
+
+<style>
+  .contact-page { padding-block: 2rem clamp(4rem,8vw,7rem); border-bottom: 1px solid var(--line); background: var(--surface-muted); }.contact-heading { display: grid; grid-template-columns: 1.2fr .8fr; align-items: end; gap: clamp(3rem,8vw,8rem); margin-top: clamp(4rem,8vw,7rem); }.contact-heading h1 { max-width: 14ch; margin-top: 1.3rem; font-size: var(--step-5); line-height: 1.01; letter-spacing: -.055em; }.contact-heading > p { color: var(--muted-strong); font-size: var(--step-1); line-height: 1.7; }
+  .contact-body { padding-block: clamp(4rem,8vw,7rem); }.contact-grid { display: grid; grid-template-columns: minmax(16rem,.55fr) minmax(0,1.45fr); align-items: start; gap: clamp(2rem,6vw,6rem); }.contact-grid aside { display: grid; gap: 1.5rem; }.contact-block { display: grid; gap: .45rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }.contact-block p { color: var(--muted); font-size: .64rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }.contact-block a, .contact-block strong { width: fit-content; font-weight: 650; }.response-note { display: grid; grid-template-columns: 2rem 1fr; gap: .75rem; padding: 1.25rem; color: #cad3d7; background: var(--surface-dark); }.response-note span { color: #70b7aa; font-family: var(--mono); font-size: .6rem; }.response-note p { font-size: .76rem; line-height: 1.55; }
+  @media (max-width: 850px) { .contact-heading, .contact-grid { grid-template-columns: 1fr; }.contact-grid aside { grid-template-columns: 1fr 1fr; }.response-note { grid-column: 1 / -1; } }
+  @media (max-width: 560px) { .contact-grid aside { grid-template-columns: 1fr; }.response-note { grid-column: auto; } }
+</style>
