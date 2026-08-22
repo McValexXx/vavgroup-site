@@ -1,5 +1,5 @@
 {
   "enabled": true,
   "endpoint": "https://vav-assistant-api.vav-group-website.workers.dev",
-  "bot_username": "VAVGroupBOT"
+  "bot_username": "VAVGroup_AIBOT"
 }

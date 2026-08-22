@@ -75,8 +75,8 @@ function humanHandoffReply(message) {
 
 function siteBotHandoffReply(message) {
   return isRomanian(message)
-    ? 'Sigur. Continuați prin botul oficial VAVGroupBOT: https://t.me/VAVGroupBOT. Solicitarea va fi transmisă lui Valentin.'
-    : 'Конечно. Продолжите в официальном боте VAVGroupBOT: https://t.me/VAVGroupBOT. Обращение будет передано Валентину.';
+    ? 'Sigur. Continuați prin botul oficial VAVGroup_AIBOT: https://t.me/VAVGroup_AIBOT. Solicitarea va fi transmisă lui Valentin.'
+    : 'Конечно. Продолжите в официальном боте VAVGroup_AIBOT: https://t.me/VAVGroup_AIBOT. Обращение будет передано Валентину.';
 }
 
 export function fallbackReply(message) {
@@ -378,7 +378,7 @@ function telegramMessageTime(message) {
   }
 }
 
-async function mirrorTelegramExchange(env, message, visitorText, botReply, event = 'Диалог с VAVGroupBOT') {
+async function mirrorTelegramExchange(env, message, visitorText, botReply, event = 'Диалог с VAVGroup_AIBOT') {
   const adminId = await adminChatId(env);
   const visitorChatId = message?.chat?.id ? String(message.chat.id) : '';
   if (!adminId || !visitorChatId || adminId === visitorChatId) return;
@@ -458,7 +458,7 @@ async function sendLead(env, lead) {
   if (!chatId) throw new Error('Telegram administrator is not connected');
   const transcript = transcriptText(lead.transcript);
   const source = normalize(lead.page, 300).startsWith('Telegram')
-    ? 'Telegram-бота VAVGroupBOT'
+    ? 'Telegram-бота VAVGroup_AIBOT'
     : 'vavgroup.pro';
   const text = [
     `<b>Новый запрос из ${source}</b>`,
@@ -683,7 +683,7 @@ async function handleTelegramWebhook(request, env) {
         name: normalize(pendingLead.name || message?.from?.first_name || 'Посетитель Telegram', 80),
         contact: contactParts.join(', '),
         message: text,
-        page: 'Telegram bot @VAVGroupBOT',
+        page: 'Telegram bot @VAVGroup_AIBOT',
         createdAt: telegramMessageTime(message),
       });
       await clearTelegramLeadState(env, chatId);

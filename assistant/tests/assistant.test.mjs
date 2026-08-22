@@ -117,7 +117,7 @@ test('site chat routes Valentin requests through the official Telegram bot', asy
   }), env);
   assert.equal(response.status, 200);
   const body = await response.json();
-  assert.match(body.reply, /t\.me\/VAVGroupBOT/);
+  assert.match(body.reply, /t\.me\/VAVGroup_AIBOT/);
   assert.equal(body.reply.includes('sendmeyrlocation'), false);
   assert.equal(body.mode, 'guided');
 });
