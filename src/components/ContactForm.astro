@@ -10,7 +10,7 @@ try {
 }
 ---
 
-<form class="contact-form" action={endpointConfigured ? rawEndpoint : undefined} method="POST" data-contact-form data-configured={String(endpointConfigured)} novalidate>
+<form class="contact-form" action={endpointConfigured ? rawEndpoint : undefined} method="POST" data-contact-form data-configured={String(endpointConfigured)} data-provider={endpointConfigured ? 'formspree' : 'pending'} novalidate>
   <div class="form-grid">
     <div class="field"><label for="name">Имя <span>*</span></label><input id="name" name="name" type="text" autocomplete="name" required /></div>
     <div class="field"><label for="company">Компания</label><input id="company" name="company" type="text" autocomplete="organization" /></div>
@@ -29,13 +29,13 @@ try {
   <div class="honeypot" aria-hidden="true"><label for="website">Не заполняйте это поле</label><input id="website" name="_gotcha" type="text" tabindex="-1" autocomplete="off" /></div>
   {!endpointConfigured && (
     <aside class="form-fallback" role="note" data-form-fallback>
-      <strong>Онлайн-форма пока не подключена.</strong>
-      <p>Свяжитесь напрямую: <a href="mailto:valentin@vavgroup.pro">valentin@vavgroup.pro</a> или <a href="tel:+79224615517">+7 (922) 461-55-17</a>.</p>
+      <strong data-fallback-title>Проверяем подключение формы…</strong>
+      <p data-fallback-text>Если отправка недоступна, свяжитесь напрямую: <a href="mailto:valentin@vavgroup.pro">valentin@vavgroup.pro</a> или <a href="tel:+79224615517">+7 (922) 461-55-17</a>.</p>
     </aside>
   )}
   <div class="form-bottom">
     <p>Согласие можно отозвать, написав на <a href="mailto:valentin@vavgroup.pro">valentin@vavgroup.pro</a>.</p>
-    <button class="button" type="submit" data-submit disabled={!endpointConfigured}>{endpointConfigured ? 'Отправить запрос' : 'Форма не подключена'} <span aria-hidden="true">↗</span></button>
+    <button class="button" type="submit" data-submit disabled={!endpointConfigured}>{endpointConfigured ? 'Отправить запрос' : 'Проверяем подключение'} <span aria-hidden="true">↗</span></button>
   </div>
   <p class="form-status" data-form-status role="status" aria-live="polite" aria-atomic="true"></p>
 </form>
@@ -45,6 +45,13 @@ try {
   forms.forEach((form) => {
     const status = form.querySelector<HTMLElement>('[data-form-status]');
     const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+    const consent = form.querySelector<HTMLInputElement>('#privacy-consent');
+    const fallback = form.querySelector<HTMLElement>('[data-form-fallback]');
+    const fallbackTitle = form.querySelector<HTMLElement>('[data-fallback-title]');
+    let assistantEndpoint = '';
+    const sessionId = typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID().replaceAll('-', '')
+      : `contact_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const select = form.querySelector<HTMLSelectElement>('#service');
     const requestedService = new URLSearchParams(window.location.search).get('service')?.toLowerCase() || '';
     const serviceMap: Record<string, string> = { sale: 'Продажи', crm: 'Продажи', automation: 'Автоматизация', ai: 'AI', process: 'Консалтинг' };
@@ -58,6 +65,38 @@ try {
       status.setAttribute('role', state === 'error' ? 'alert' : 'status');
       status.setAttribute('aria-live', state === 'error' ? 'assertive' : 'polite');
     };
+
+    const enableTelegramDelivery = (endpoint: string) => {
+      assistantEndpoint = endpoint;
+      form.dataset.configured = 'true';
+      form.dataset.provider = 'telegram';
+      if (consent) consent.disabled = false;
+      if (submit) {
+        submit.disabled = false;
+        submit.innerHTML = 'Отправить запрос <span aria-hidden="true">↗</span>';
+      }
+      if (fallback) fallback.hidden = true;
+    };
+
+    if (form.dataset.provider === 'pending') {
+      fetch('/config/assistant.json', { credentials: 'same-origin', cache: 'no-store' })
+        .then((response) => response.ok ? response.json() : null)
+        .then((config) => {
+          try {
+            const endpoint = new URL(typeof config?.endpoint === 'string' ? config.endpoint : '');
+            if (config?.enabled !== false && endpoint.protocol === 'https:') {
+              enableTelegramDelivery(endpoint.href.replace(/\/$/, ''));
+              return;
+            }
+          } catch { }
+          if (fallbackTitle) fallbackTitle.textContent = 'Онлайн-форма пока не подключена.';
+          if (submit) submit.textContent = 'Форма не подключена';
+        })
+        .catch(() => {
+          if (fallbackTitle) fallbackTitle.textContent = 'Онлайн-форма пока не подключена.';
+          if (submit) submit.textContent = 'Форма не подключена';
+        });
+    }
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -79,10 +118,34 @@ try {
       status.textContent = '';
       status.removeAttribute('data-state');
       try {
-        const response = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+        const formData = new FormData(form);
+        let response: Response;
+        if (form.dataset.provider === 'telegram' && assistantEndpoint) {
+          const company = String(formData.get('company') || '').trim();
+          const service = String(formData.get('service') || '').trim();
+          const details = String(formData.get('message') || '').trim();
+          const email = String(formData.get('email') || '').trim();
+          const contact = String(formData.get('contact') || '').trim();
+          response = await fetch(`${assistantEndpoint}/lead`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: String(formData.get('name') || ''),
+              contact: [contact, email].filter(Boolean).join(' / '),
+              message: [`Направление: ${service}`, company ? `Компания: ${company}` : '', details ? `Сообщение: ${details}` : ''].filter(Boolean).join('\n'),
+              consent: formData.get('privacy_consent') === 'accepted',
+              website: String(formData.get('_gotcha') || ''),
+              page: window.location.href,
+              transcript: [],
+              session_id: sessionId,
+            }),
+          });
+        } else {
+          response = await fetch(form.action, { method: 'POST', body: formData, headers: { Accept: 'application/json' } });
+        }
         if (!response.ok) throw new Error('Request failed');
         form.reset();
-        setStatus('Спасибо. Запрос отправлен — мы свяжемся с вами после изучения задачи.', 'success');
+        setStatus('Спасибо. Запрос отправлен Валентину — он свяжется с вами после изучения задачи.', 'success');
       } catch {
         setStatus('Не удалось отправить форму. Напишите на valentin@vavgroup.pro или позвоните по номеру +7 (922) 461-55-17.', 'error');
       } finally {

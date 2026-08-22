@@ -108,7 +108,7 @@ The site contains a premium assistant widget with two modes:
 - local guided answers from approved public VAV content when no backend endpoint is configured;
 - Cloudflare Workers AI answers when the protected Worker is connected.
 
-The separate lead handoff sends the visitor's name, contact and business context to Valentin's Telegram bot. Contact details are not sent to the AI model. The Worker redacts contact-like text before any AI request and falls back to guided answers if AI is unavailable.
+The separate lead handoff and the main `/contacts` form send the visitor's name, contact and business context to Valentin's Telegram bot after activation. Contact details are not sent to the AI model. The Worker redacts contact-like text before any AI request and falls back to guided answers if AI is unavailable.
 
 Run [connect-vav-assistant.bat](connect-vav-assistant.bat) after creating a bot through Telegram's official `@BotFather`. The launcher handles Cloudflare authorization, protected secret storage, webhook registration, a Telegram delivery test, public runtime configuration, production checks and the GitHub push. The BotFather token is entered in a hidden prompt and is never written to GitHub or a project file.
 
