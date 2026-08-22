@@ -58,9 +58,20 @@
         <button type="button" data-quick-message="С чего начать диагностику бизнеса?">Диагностика</button>
       </div>
 
-      <button class="assistant__handoff" type="button" data-assistant-handoff>
-        <span>Передать задачу Валентину</span><span aria-hidden="true">↗</span>
-      </button>
+      <div class="assistant__contact-actions">
+        <button class="assistant__handoff" type="button" data-assistant-handoff>
+          <span>Передать задачу</span><span aria-hidden="true">↗</span>
+        </button>
+        <a
+          class="assistant__direct"
+          href="https://t.me/sendmeyrlocation"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Написать Валентину напрямую в Telegram"
+        >
+          <span>Написать в Telegram</span><span aria-hidden="true">↗</span>
+        </a>
+      </div>
 
       <form class="assistant__composer" data-assistant-message-form>
         <label class="sr-only" for="vav-assistant-message">Сообщение</label>
@@ -386,7 +397,10 @@
   .assistant__quick[hidden] { display: none; }
   .assistant__quick button { flex: 0 0 auto; padding: .42rem .6rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted-strong); background: #fff; font-size: .64rem; cursor: pointer; }
   .assistant__quick button:hover { border-color: var(--accent); color: var(--accent-hover); }
-  .assistant__handoff { width: calc(100% - 1.6rem); display: flex; align-items: center; justify-content: space-between; margin: .65rem .8rem 0; padding: .55rem .7rem; border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line)); border-radius: .45rem; color: var(--accent-hover); background: color-mix(in srgb, var(--accent) 5%, white); font-size: .68rem; font-weight: 700; cursor: pointer; }
+  .assistant__contact-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; margin: .65rem .8rem 0; }
+  .assistant__handoff, .assistant__direct { min-height: 2.35rem; display: flex; align-items: center; justify-content: space-between; gap: .4rem; padding: .5rem .6rem; border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line)); border-radius: .45rem; color: var(--accent-hover); background: color-mix(in srgb, var(--accent) 5%, white); font-size: .63rem; font-weight: 700; line-height: 1.25; cursor: pointer; }
+  .assistant__direct { border-color: color-mix(in srgb, #229ed9 36%, var(--line)); color: #176f96; background: color-mix(in srgb, #229ed9 6%, white); text-decoration: none; }
+  .assistant__handoff:hover, .assistant__direct:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, white); }
   .assistant__composer { display: grid; grid-template-columns: 1fr 2.65rem; align-items: end; gap: .5rem; padding: .65rem .8rem .25rem; }
   .assistant__composer textarea { max-height: 7rem; min-height: 2.65rem; padding: .72rem .75rem; resize: none; border: 1px solid var(--line); border-radius: .5rem; color: var(--ink); background: #fff; font-size: .75rem; line-height: 1.45; }
   .assistant__composer textarea:focus { border-color: var(--accent); outline: 3px solid color-mix(in srgb, var(--accent) 10%, white); }
