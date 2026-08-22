@@ -354,6 +354,55 @@ function telegramVisitorIsRomanian(message, text = '') {
   return String(message?.from?.language_code || '').toLowerCase().startsWith('ro') || isRomanian(text);
 }
 
+function telegramMessageTime(message) {
+  const unixTime = Number(message?.date || 0);
+  const date = unixTime > 0 ? new Date(unixTime * 1000) : new Date();
+  try {
+    return `${new Intl.DateTimeFormat('ru-RU', {
+      timeZone: 'Europe/Moscow',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).format(date)} МСК`;
+  } catch {
+    return date.toISOString();
+  }
+}
+
+async function mirrorTelegramExchange(env, message, visitorText, botReply, event = 'Диалог с VAVGroupBOT') {
+  const adminId = await adminChatId(env);
+  const visitorChatId = message?.chat?.id ? String(message.chat.id) : '';
+  if (!adminId || !visitorChatId || adminId === visitorChatId) return;
+
+  const from = message?.from || {};
+  const contact = message?.contact || {};
+  const name = normalize([from.first_name, from.last_name].filter(Boolean).join(' '), 80) || 'Не указано';
+  const username = normalize(from.username || '', 40);
+  const phone = normalize(contact.phone_number || '', 40);
+  const text = [
+    `<b>${escapeHtml(event)}</b>`,
+    '',
+    `<b>Имя:</b> ${escapeHtml(name)}`,
+    username ? `<b>Telegram:</b> @${escapeHtml(username)}` : '<b>Telegram:</b> username не указан',
+    `<b>Telegram ID:</b> ${escapeHtml(String(from.id || visitorChatId))}`,
+    phone ? `<b>Телефон:</b> ${escapeHtml(phone)}` : '<b>Телефон:</b> Telegram не передал',
+    `<b>Время:</b> ${escapeHtml(telegramMessageTime(message))}`,
+    '',
+    `<b>Посетитель:</b>\n${escapeHtml(normalize(visitorText, 1500) || '[без текста]')}`,
+    botReply ? `\n<b>VAV Assistant:</b>\n${escapeHtml(normalize(botReply, 1500))}` : '',
+  ].filter(Boolean).join('\n').slice(0, 3900);
+
+  await telegramCall(env, 'sendMessage', {
+    chat_id: adminId,
+    text,
+    parse_mode: 'HTML',
+    disable_web_page_preview: true,
+  });
+}
+
 async function telegramConnectionCurrent(env) {
   const chatId = await adminChatId(env);
   if (!chatId) return false;
@@ -411,6 +460,7 @@ async function sendLead(env, lead) {
     `<b>Имя:</b> ${escapeHtml(lead.name)}`,
     `<b>Контакт:</b> ${escapeHtml(lead.contact)}`,
     `<b>Страница:</b> ${escapeHtml(lead.page || 'vavgroup.pro')}`,
+    `<b>Время:</b> ${escapeHtml(lead.createdAt || telegramMessageTime())}`,
     '',
     `<b>Задача:</b>\n${escapeHtml(lead.message)}`,
     transcript ? `\n<b>Последние сообщения:</b>\n${escapeHtml(transcript)}` : '',
@@ -522,24 +572,28 @@ async function handleTelegramWebhook(request, env) {
           text: 'Код подключения не принят. Откройте персональную ссылку, созданную мастером VAV Assistant.',
         });
       } else {
+        const reply = romanian
+          ? 'Bun venit la VAV Group. Profilul public Telegram, ora și mesajele trimise botului sunt transmise lui Valentin pentru prelucrarea solicitării. Telefonul este transmis numai dacă apăsați voluntar butonul de contact; continuând dialogul confirmați că ați citit această informare.'
+          : 'Добро пожаловать в VAV Group. Публичный Telegram-профиль, время и сообщения боту передаются Валентину для обработки обращения. Телефон передаётся только при добровольном нажатии кнопки контакта; продолжая диалог, вы подтверждаете, что прочитали это уведомление.';
         await telegramCall(env, 'sendMessage', {
           chat_id: chatId,
-          text: romanian
-            ? 'Bun venit la VAV Group. Puteți pune o întrebare aici sau puteți transmite voluntar contactul lui Valentin. Apăsarea butonului de mai jos confirmă acordul pentru transmiterea contactului și a mesajului dvs.'
-            : 'Добро пожаловать в VAV Group. Здесь можно задать вопрос или добровольно передать контакт Валентину. Нажатие кнопки ниже означает согласие на передачу вашего контакта и сообщения.',
+          text: reply,
           reply_markup: telegramContactKeyboard(romanian),
         });
+        await mirrorTelegramExchange(env, message, '/start', reply, 'Новый посетитель нажал START');
       }
       return new Response('OK');
     }
 
     if (/^\/cancel(?:@\w+)?$/i.test(text)) {
       await clearTelegramLeadState(env, chatId);
+      const reply = romanian ? 'Transmiterea contactului a fost anulată.' : 'Передача контакта отменена.';
       await telegramCall(env, 'sendMessage', {
         chat_id: chatId,
-        text: romanian ? 'Transmiterea contactului a fost anulată.' : 'Передача контакта отменена.',
+        text: reply,
         reply_markup: { remove_keyboard: true },
       });
+      await mirrorTelegramExchange(env, message, text, reply);
       return new Response('OK');
     }
 
@@ -547,12 +601,14 @@ async function handleTelegramWebhook(request, env) {
       const senderId = message?.from?.id ? String(message.from.id) : '';
       const contactUserId = contact?.user_id ? String(contact.user_id) : '';
       if (!senderId || senderId !== contactUserId) {
+        const reply = romanian
+          ? 'Din motive de confidențialitate, trimiteți doar propriul contact folosind butonul Telegram.'
+          : 'Из соображений конфиденциальности передайте только свой контакт через кнопку Telegram.';
         await telegramCall(env, 'sendMessage', {
           chat_id: chatId,
-          text: romanian
-            ? 'Din motive de confidențialitate, trimiteți doar propriul contact folosind butonul Telegram.'
-            : 'Из соображений конфиденциальности передайте только свой контакт через кнопку Telegram.',
+          text: reply,
         });
+        await mirrorTelegramExchange(env, message, '[попытка передать чужой контакт]', reply);
         return new Response('OK');
       }
 
@@ -563,44 +619,52 @@ async function handleTelegramWebhook(request, env) {
         username: normalize(message?.from?.username || '', 40),
         telegram_user_id: senderId,
       });
+      const reply = romanian
+        ? 'Mulțumesc. Descrieți acum problema de business într-un singur mesaj; contactul și mesajul vor fi trimise lui Valentin.'
+        : 'Спасибо. Теперь опишите бизнес-задачу одним сообщением; контакт и сообщение будут переданы Валентину.';
       await telegramCall(env, 'sendMessage', {
         chat_id: chatId,
-        text: romanian
-          ? 'Mulțumesc. Descrieți acum problema de business într-un singur mesaj; contactul și mesajul vor fi trimise lui Valentin.'
-          : 'Спасибо. Теперь опишите бизнес-задачу одним сообщением; контакт и сообщение будут переданы Валентину.',
+        text: reply,
         reply_markup: { remove_keyboard: true },
       });
+      await mirrorTelegramExchange(env, message, '[добровольно передан контакт]', reply, 'Посетитель передал контакт');
       return new Response('OK');
     }
 
     if (/^\/status(?:@\w+)?$/i.test(text)) {
       const currentAdmin = await adminChatId(env);
+      const reply = currentAdmin === chatId
+        ? `VAV Assistant работает. AI-режим: ${aiMode(env)}.`
+        : 'Этот чат не подключён как получатель заявок VAV Group.';
       await telegramCall(env, 'sendMessage', {
         chat_id: chatId,
-        text: currentAdmin === chatId
-          ? `VAV Assistant работает. AI-режим: ${aiMode(env)}.`
-          : 'Этот чат не подключён как получатель заявок VAV Group.',
+        text: reply,
       });
+      await mirrorTelegramExchange(env, message, text, reply);
       return new Response('OK');
     }
 
     if (text.startsWith('/')) {
+      const reply = 'Доступные команды: /status, /cancel. Также можно написать вопрос обычным сообщением.';
       await telegramCall(env, 'sendMessage', {
         chat_id: chatId,
-        text: 'Доступные команды: /status, /cancel. Также можно написать вопрос обычным сообщением.',
+        text: reply,
       });
+      await mirrorTelegramExchange(env, message, text, reply);
       return new Response('OK');
     }
 
     const pendingLead = await telegramLeadState(env, chatId);
     if (pendingLead?.stage === 'awaiting_task') {
       if (text.length < 5) {
+        const reply = romanian
+          ? 'Descrieți sarcina puțin mai clar, într-un singur mesaj.'
+          : 'Опишите задачу немного подробнее одним сообщением.';
         await telegramCall(env, 'sendMessage', {
           chat_id: chatId,
-          text: romanian
-            ? 'Descrieți sarcina puțin mai clar, într-un singur mesaj.'
-            : 'Опишите задачу немного подробнее одним сообщением.',
+          text: reply,
         });
+        await mirrorTelegramExchange(env, message, text, reply);
         return new Response('OK');
       }
 
@@ -614,6 +678,7 @@ async function handleTelegramWebhook(request, env) {
         contact: contactParts.join(', '),
         message: text,
         page: 'Telegram bot @VAVGroupBOT',
+        createdAt: telegramMessageTime(message),
       });
       await clearTelegramLeadState(env, chatId);
       await telegramCall(env, 'sendMessage', {
@@ -627,22 +692,26 @@ async function handleTelegramWebhook(request, env) {
     }
 
     if (wantsHumanHandoff(text)) {
+      const reply = `${humanHandoffReply(text)}\n\n${romanian
+        ? 'Dacă preferați să fiți contactat, trimiteți voluntar contactul prin butonul de mai jos.'
+        : 'Если вам удобнее, чтобы с вами связались, добровольно передайте контакт кнопкой ниже.'}`;
       await telegramCall(env, 'sendMessage', {
         chat_id: chatId,
-        text: `${humanHandoffReply(text)}\n\n${romanian
-          ? 'Dacă preferați să fiți contactat, trimiteți voluntar contactul prin butonul de mai jos.'
-          : 'Если вам удобнее, чтобы с вами связались, добровольно передайте контакт кнопкой ниже.'}`,
+        text: reply,
         disable_web_page_preview: true,
         reply_markup: telegramContactKeyboard(romanian),
       });
+      await mirrorTelegramExchange(env, message, text, reply, 'Запрос связи с Валентином');
       return new Response('OK');
     }
 
     if (!rateLimit(request, `telegram_${chatId}`)) {
+      const reply = 'Слишком много сообщений за короткое время. Попробуйте снова через несколько минут.';
       await telegramCall(env, 'sendMessage', {
         chat_id: chatId,
-        text: 'Слишком много сообщений за короткое время. Попробуйте снова через несколько минут.',
+        text: reply,
       });
+      await mirrorTelegramExchange(env, message, text, reply);
       return new Response('OK');
     }
 
@@ -652,6 +721,7 @@ async function handleTelegramWebhook(request, env) {
       text: reply.slice(0, 3900),
       disable_web_page_preview: true,
     });
+    await mirrorTelegramExchange(env, message, text, reply);
   } catch {
     // Telegram retries non-2xx webhook responses. Return 200 after handling to avoid duplicate commands.
   }

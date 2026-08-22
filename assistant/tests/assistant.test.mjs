@@ -335,11 +335,64 @@ test('Telegram contact and task are forwarded to the connected Valentin chat', a
 
     assert.equal(taskResponse.status, 200);
     assert.equal(state.values.has('telegram_lead:12345'), false);
-    assert.equal(telegramRequests.length, 3);
+    assert.equal(telegramRequests.length, 4);
     assert.equal(telegramRequests[1].body.chat_id, '99999');
-    assert.match(telegramRequests[1].body.text, /Alex|\+37379000000|@visitor|audit/i);
-    assert.equal(telegramRequests[2].body.chat_id, '12345');
-    assert.match(telegramRequests[2].body.text, /Valentin/i);
+    assert.match(telegramRequests[1].body.text, /Alex|\+37379000000|@visitor/i);
+    assert.equal(telegramRequests[2].body.chat_id, '99999');
+    assert.match(telegramRequests[2].body.text, /Alex|\+37379000000|@visitor|audit/i);
+    assert.equal(telegramRequests[3].body.chat_id, '12345');
+    assert.match(telegramRequests[3].body.text, /Valentin/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Telegram mirrors each visitor message and bot answer to the connected admin chat', async () => {
+  const telegramRequests = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options) => {
+    telegramRequests.push({ url: String(url), body: JSON.parse(options.body) });
+    return new Response(JSON.stringify({ ok: true, result: {} }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  const state = {
+    values: new Map([['admin_chat_id', '99999']]),
+    async get(key) { return this.values.get(key) || null; },
+    async put(key, value) { this.values.set(key, value); },
+    async delete(key) { this.values.delete(key); },
+  };
+
+  try {
+    const response = await handleRequest(new Request('https://worker.example/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Bot-Api-Secret-Token': 'webhook-secret',
+      },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 12345 },
+          from: { id: 12345, first_name: 'Alex', username: 'visitor', language_code: 'ro' },
+          date: 1787432400,
+          text: 'Cum pot automatiza vânzările?',
+        },
+      }),
+    }), {
+      ...env,
+      VAV_STATE: state,
+      TELEGRAM_BOT_TOKEN: 'test-token',
+      TELEGRAM_WEBHOOK_SECRET: 'webhook-secret',
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(telegramRequests.length, 2);
+    assert.equal(telegramRequests[0].body.chat_id, '12345');
+    assert.equal(telegramRequests[1].body.chat_id, '99999');
+    assert.match(telegramRequests[1].body.text, /Alex|@visitor|12345|automatiza|VAV Assistant/i);
+    assert.match(telegramRequests[1].body.text, /Telegram не передал/i);
   } finally {
     globalThis.fetch = originalFetch;
   }
