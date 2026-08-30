@@ -14,7 +14,7 @@ interface Props {
 const { title, description, noindex = false, image = '/og/vav-group.jpg' } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const socialImage = new URL(image, Astro.site);
-const yandexMetricaId = import.meta.env.PUBLIC_YANDEX_METRICA_ID;
+const yandexMetricaId = import.meta.env.PUBLIC_YANDEX_METRICA_ID || '112092522';
 const googleAnalyticsId = import.meta.env.PUBLIC_GOOGLE_ANALYTICS_ID;
 const organizationSchema = {
   '@context': 'https://schema.org',
