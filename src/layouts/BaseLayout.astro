@@ -62,7 +62,7 @@ const organizationSchema = {
     <script is:inline type="application/ld+json" set:html={JSON.stringify(organizationSchema)}></script>
     {googleAnalyticsId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}></script>}
     {googleAnalyticsId && <script is:inline define:vars={{ googleAnalyticsId }}>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config',googleAnalyticsId,{anonymize_ip:true});</script>}
-    {yandexMetricaId && <script is:inline define:vars={{ yandexMetricaId }}>window.addEventListener('load',()=>{const s=document.createElement('script');s.src='https://mc.yandex.ru/metrika/tag.js';s.async=true;document.head.appendChild(s);s.onload=()=>window.ym?.(yandexMetricaId,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true});});</script>}
+    {yandexMetricaId && <script is:inline define:vars={{ yandexMetricaId }}>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=Date.now();for(let j=0;j<e.scripts.length;j+=1){if(e.scripts[j].src===r)return}k=e.createElement(t);a=e.getElementsByTagName(t)[0];k.async=true;k.src=r;a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js','ym');window.ym(yandexMetricaId,'init',{ssr:true,clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:false});</script>}
     <title>{title}</title>
   </head>
   <body>
